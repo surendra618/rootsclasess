@@ -1,0 +1,26 @@
+# Robots.txt for Roots Classes (https://rootsclasses.in)
+User-agent: *
+Allow: /
+Allow: /course
+Allow: /coursedetails
+Allow: /scholarship
+Allow: /test
+Allow: /blog
+Allow: /contact
+Allow: /about
+Allow: /about-us
+
+# Disallow private user/admin areas
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /instructor
+Disallow: /instructor/*
+Disallow: /stdlogin
+Disallow: /register
+Disallow: /stdprofile
+Disallow: /purchescourse
+Disallow: /api/
+
+# Host & Sitemap Declaration
+Host: https://rootsclasses.in
+Sitemap: https://rootsclasses.in/sitemap.xml
