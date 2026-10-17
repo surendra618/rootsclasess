@@ -40,7 +40,7 @@ const AdminBlogPanel = () => {
             document.body.style.overflow = 'unset';
         };
     }, [isFormOpen]);
-
+    
     const GetBlogs = useCallback(async () => {
         setLoading(true);
         try {
