@@ -52,7 +52,9 @@ const api ={
         approvedCourse:Base_Url+"/course/approved-course",
     },
     enroll:{
-      getpurchesCourse:Base_Url+"/enroll/get-purches-course"
+      getpurchesCourse:Base_Url+"/enroll/get-purches-course",
+      getpurchesTest:Base_Url+"/enroll/get-purches-test",
+      getAllTestPurchases:Base_Url+"/enroll/get-all-test-purchases"
     },
     test:{
       createTest:Base_Url+"/test/create_test",
@@ -77,11 +79,29 @@ const api ={
          update: Base_Url + "/success-story/update",
          delete: Base_Url + "/success-story/delete"
      },
-     schollership:{
-        schollershipResult:Base_Url+"/result/get-all-results",
-        grantScholarship:Base_Url+"/scholarship/approve",
-        rejectScholarship:Base_Url+"/scholarship/reject",
-        getApprovedReject:Base_Url+"/scholarship/approved-rejected"
+     schollership: {
+        allApplications: Base_Url + "/scholarship/all",
+        grantScholarship: Base_Url + "/scholarship/approve",
+        rejectScholarship: Base_Url + "/scholarship/reject",
+        deleteScholarship: Base_Url + "/scholarship/delete",
+        getApprovedReject: Base_Url + "/scholarship/approved-rejected",
+        schollershipResult: Base_Url + "/result/get-all-results",
+        scholarshipResult: Base_Url + "/result/get-all-results",
+        grantTestAccess: Base_Url + "/scholarship/grant-test-access",
+        revokeTestAccess: Base_Url + "/scholarship/revoke-test-access",
+        getAvailableTests: Base_Url + "/scholarship/available-tests"
+     },
+     scholarship: {
+        allApplications: Base_Url + "/scholarship/all",
+        grantScholarship: Base_Url + "/scholarship/approve",
+        rejectScholarship: Base_Url + "/scholarship/reject",
+        deleteScholarship: Base_Url + "/scholarship/delete",
+        getApprovedReject: Base_Url + "/scholarship/approved-rejected",
+        scholarshipResult: Base_Url + "/result/get-all-results",
+        schollershipResult: Base_Url + "/result/get-all-results",
+        grantTestAccess: Base_Url + "/scholarship/grant-test-access",
+        revokeTestAccess: Base_Url + "/scholarship/revoke-test-access",
+        getAvailableTests: Base_Url + "/scholarship/available-tests"
      }
 
     

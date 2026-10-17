@@ -486,8 +486,10 @@ const CourseDetails = () => {
       const response = await axios.post(api.scholarship.getSchollership, {
         studentId: studentId
       });
-      if (response.data?.success && response.data?.data) {
+      if (response.data?.success && response.data?.data && response.data.data.status === 'approved') {
         setScholarship(response.data.data);
+      } else {
+        setScholarship(null);
       }
       console.log(response);
     } catch (error) {

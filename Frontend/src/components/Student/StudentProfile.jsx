@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/endpoints';
 import useStudentStore from '../../Store/studentstore';
 import { toast } from 'react-toastify';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import StudentTestPanel from '../../pages/Student/TestList';
 import PurchasedCourse from './PurchesCourses';
+import ScholarshipDashboard from './ScholarshipDashboard';
 import {
     User,
     Mail,
@@ -35,6 +36,7 @@ import {
 const StudentProfile = () => {
     const { student, setStudent } = useStudentStore();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -43,8 +45,21 @@ const StudentProfile = () => {
     const [saving, setSaving] = useState(false);
     const [enrolledCourses, setEnrolledCourses] = useState([]);
     const [testResults, setTestResults] = useState([]);
-    const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'courses', 'academic', 'settings'
+    const [totalTestsCount, setTotalTestsCount] = useState(0);
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'courses', 'tests', 'completed-tests'
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        if (location.state?.tab) {
+            setActiveTab(location.state.tab);
+        } else {
+            const params = new URLSearchParams(location.search);
+            const tabParam = params.get('tab');
+            if (tabParam) {
+                setActiveTab(tabParam);
+            }
+        }
+    }, [location]);
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -88,6 +103,34 @@ const StudentProfile = () => {
         }
     };
 
+    const fetchTotalTests = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            let res = null;
+            if (token) {
+                res = await axios.post(
+                    api.student.getTestforStudent,
+                    {},
+                    { headers: { Authorization: `Bearer ${token}` } }
+                ).catch(() => null);
+            }
+            if (!res?.data?.success) {
+                res = await axios.post(api.test.publishTest).catch(() => null);
+            }
+            if (res?.data?.success) {
+                const rawTests = res.data.tests || res.data.data || [];
+                const nonScholarshipTests = rawTests.filter(t => {
+                    const title = (t.title || '').toLowerCase();
+                    const cat = (t.category || '').toLowerCase();
+                    return !title.includes('scholarship') && !cat.includes('scholarship');
+                });
+                setTotalTestsCount(nonScholarshipTests.length);
+            }
+        } catch (error) {
+            console.error("Error fetching total tests count:", error);
+        }
+    };
+
     const GetStudentData = async () => {
         const studentId = getStudentId();
 
@@ -119,6 +162,7 @@ const StudentProfile = () => {
                     setEnrolledCourses(res.data.user.enrolledCourses);
                 }
                 fetchTestResults();
+                fetchTotalTests();
             } else {
                 toast.error(res.data.message || "Failed to fetch student data");
             }
@@ -280,8 +324,9 @@ const StudentProfile = () => {
     const navItems = [
         { id: 'overview', label: 'Overview Dashboard', icon: LayoutDashboard },
         { id: 'courses', label: 'My Enrolled Courses', icon: BookOpen, count: enrolledCourses.length },
-        { id: 'academic', label: 'Academic Details', icon: GraduationCap },
-        { id: 'tests', label: 'Online Mock Tests', icon: FileText, count: testResults.length },
+        { id: 'tests', label: 'Test Series', icon: FileText, count: totalTestsCount },
+        { id: 'completed-tests', label: 'Completed Test Series', icon: CheckCircle2, count: testResults.length },
+        { id: 'scholarship-test', label: 'Scholarship Test', icon: Award },
     ];
 
     return (
@@ -473,115 +518,119 @@ const StudentProfile = () => {
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-400">Student Portal</span>
                             <span className="text-slate-300">/</span>
-                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider capitalize">{activeTab}</span>
+                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider capitalize">
+                                {activeTab === 'completed-tests' ? 'Completed Test Series' : activeTab === 'tests' ? 'Test Series' : activeTab === 'scholarship-test' ? 'Scholarship Test' : activeTab}
+                            </span>
                         </div>
                         <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
                             Welcome back, {studentData.fullName?.split(' ')[0]} 👋
                         </h2>
                     </div>
 
-                    <button
-                        onClick={() => navigate('/course')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-sm transition-all shadow-xs"
-                    >
-                        <Sparkles size={15} />
-                        <span>Explore Courses</span>
-                    </button>
+                    {activeTab === 'overview' && (
+                        <button
+                            onClick={() => navigate('/course')}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-sm transition-all shadow-xs cursor-pointer"
+                        >
+                            <Sparkles size={15} />
+                            <span>Explore Courses</span>
+                        </button>
+                    )}
                 </header>
 
                 <main className="p-4 sm:p-6 md:p-8 flex-1 max-w-7xl w-full mx-auto space-y-8">
 
-                    {/* Hero Profile Banner */}
-                    <section className="bg-white border border-slate-200 overflow-hidden rounded-sm shadow-xs">
-                        <div className="h-24 md:h-28 w-full relative overflow-hidden bg-slate-900">
-                            <img
-                                src="https://chicinfotech.com/assets/img/banner-3.jpeg"
-                                alt="Tech Profile Banner"
-                                className="w-full h-full object-cover opacity-85"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/20 to-transparent"></div>
-
-                            <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-                                <div className="px-2.5 py-0.5 bg-black/60 backdrop-blur-md text-white border border-white/10 text-[10px] font-bold tracking-wider rounded-md">
-                                    ID: {studentData._id?.slice(-8).toUpperCase()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Profile Info Row */}
-                        <div className="p-5 md:p-6 pt-0">
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
-                                <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-                                    <div className="relative group flex-shrink-0 -mt-10 md:-mt-12">
-                                        <div className="w-20 h-20 md:w-22 md:h-22 border-3 border-white bg-white overflow-hidden relative rounded-full shadow-md">
-                                            <img
-                                                src={profileImageUrl}
-                                                alt={studentData.fullName}
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                            />
-                                            <label
-                                                htmlFor="mainImageUpload"
-                                                className={`absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer ${uploadingImage ? 'opacity-100' : ''}`}
-                                            >
-                                                {uploadingImage ? (
-                                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white animate-spin rounded-full"></div>
-                                                ) : (
-                                                    <div className="flex flex-col items-center text-white">
-                                                        <Camera size={18} className="mb-0.5" />
-                                                        <span className="text-[8px] font-black uppercase tracking-widest">Update</span>
-                                                    </div>
-                                                )}
-                                            </label>
-                                            <input
-                                                type="file"
-                                                id="mainImageUpload"
-                                                accept="image/*"
-                                                onChange={handleImageSelect}
-                                                className="hidden"
-                                                disabled={uploadingImage}
-                                            />
-                                        </div>
-                                        <div className="absolute bottom-1 right-1 bg-emerald-500 border-2 border-white w-4 h-4 rounded-full" title="Active Account"></div>
-                                    </div>
-
-                                    <div className="pt-2 md:pt-3">
-                                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                                            {studentData.fullName}
-                                        </h1>
-                                        <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
-                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-tight border border-blue-100 rounded-md">
-                                                <GraduationCap size={14} />
-                                                {studentData.currentClass ? `Class ${studentData.currentClass}` : 'Student'}
-                                            </div>
-                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-tight border border-emerald-100 rounded-md">
-                                                <ShieldCheck size={14} />
-                                                Verified Student
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-blue-600 transition-all rounded-sm flex-shrink-0 mt-2 md:mt-4"
-                                >
-                                    <Edit3 size={14} />
-                                    <span>Edit Profile</span>
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <StatBox onClick={() => setActiveTab('courses')} icon={<BookOpen className="text-blue-600" />} label="Active Courses" value={enrolledCourses.length} />
-                        <StatBox icon={<Award className="text-purple-600" />} label="Current Class" value={studentData.currentClass || 'N/A'} />
-                        <StatBox icon={<Calendar className="text-emerald-600" />} label="Member Since" value={studentData.createdAt ? new Date(studentData.createdAt).getFullYear() : '2026'} />
-                        <StatBox icon={<Heart className="text-rose-600" />} label="Gender" value={studentData.gender || 'Not set'} />
-                    </div>
-
                     {/* TABBED CONTENT PANELS */}
                     {activeTab === 'overview' && (
+                        <div className="space-y-8 animate-fade-in">
+                            {/* Hero Profile Banner */}
+                            <section className="bg-white border border-slate-200 overflow-hidden rounded-sm shadow-xs">
+                                <div className="h-24 md:h-28 w-full relative overflow-hidden bg-slate-900">
+                                    <img
+                                        src="https://chicinfotech.com/assets/img/banner-3.jpeg"
+                                        alt="Tech Profile Banner"
+                                        className="w-full h-full object-cover opacity-85"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/20 to-transparent"></div>
+
+                                    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                                        <div className="px-2.5 py-0.5 bg-black/60 backdrop-blur-md text-white border border-white/10 text-[10px] font-bold tracking-wider rounded-md">
+                                            ID: {studentData._id?.slice(-8).toUpperCase()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Profile Info Row */}
+                                <div className="p-5 md:p-6 pt-0">
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
+                                        <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+                                            <div className="relative group flex-shrink-0 -mt-10 md:-mt-12">
+                                                <div className="w-20 h-20 md:w-22 md:h-22 border-3 border-white bg-white overflow-hidden relative rounded-full shadow-md">
+                                                    <img
+                                                        src={profileImageUrl}
+                                                        alt={studentData.fullName}
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    />
+                                                    <label
+                                                        htmlFor="mainImageUpload"
+                                                        className={`absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer ${uploadingImage ? 'opacity-100' : ''}`}
+                                                    >
+                                                        {uploadingImage ? (
+                                                            <div className="w-5 h-5 border-2 border-white/20 border-t-white animate-spin rounded-full"></div>
+                                                        ) : (
+                                                            <div className="flex flex-col items-center text-white">
+                                                                <Camera size={18} className="mb-0.5" />
+                                                                <span className="text-[8px] font-black uppercase tracking-widest">Update</span>
+                                                            </div>
+                                                        )}
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        id="mainImageUpload"
+                                                        accept="image/*"
+                                                        onChange={handleImageSelect}
+                                                        className="hidden"
+                                                        disabled={uploadingImage}
+                                                    />
+                                                </div>
+                                                <div className="absolute bottom-1 right-1 bg-emerald-500 border-2 border-white w-4 h-4 rounded-full" title="Active Account"></div>
+                                            </div>
+
+                                            <div className="pt-2 md:pt-3">
+                                                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                                                    {studentData.fullName}
+                                                </h1>
+                                                <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
+                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-tight border border-blue-100 rounded-md">
+                                                        <GraduationCap size={14} />
+                                                        {studentData.currentClass ? `Class ${studentData.currentClass}` : 'Student'}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-tight border border-emerald-100 rounded-md">
+                                                        <ShieldCheck size={14} />
+                                                        Verified Student
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-blue-600 transition-all rounded-sm flex-shrink-0 mt-2 md:mt-4 cursor-pointer"
+                                        >
+                                            <Edit3 size={14} />
+                                            <span>Edit Profile</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Quick Stats Grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <StatBox onClick={() => setActiveTab('courses')} icon={<BookOpen className="text-blue-600" />} label="Active Courses" value={enrolledCourses.length} />
+                                <StatBox onClick={() => setActiveTab('tests')} icon={<FileText className="text-blue-600" />} label="Test Series" value={totalTestsCount} />
+                                <StatBox onClick={() => setActiveTab('completed-tests')} icon={<Award className="text-purple-600" />} label="Completed Tests" value={testResults.length} />
+                                <StatBox icon={<Calendar className="text-emerald-600" />} label="Member Since" value={studentData.createdAt ? new Date(studentData.createdAt).getFullYear() : '2026'} />
+                            </div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Personal & Academic Details */}
                             <div className="lg:col-span-2 space-y-8">
@@ -693,7 +742,7 @@ const StudentProfile = () => {
                                             {testResults.slice(0, 3).map((resItem, idx) => (
                                                 <div
                                                     key={idx}
-                                                    onClick={() => setActiveTab('tests')}
+                                                    onClick={() => setActiveTab('completed-tests')}
                                                     className="p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer rounded-sm flex items-center justify-between"
                                                 >
                                                     <div className="min-w-0 flex-1 pr-2">
@@ -715,7 +764,7 @@ const StudentProfile = () => {
                                                 </div>
                                             ))}
                                             <button
-                                                onClick={() => setActiveTab('tests')}
+                                                onClick={() => setActiveTab('completed-tests')}
                                                 className="w-full py-2 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs rounded-sm transition-colors flex items-center justify-center gap-1.5 mt-2"
                                             >
                                                 <span>View All Test Results</span>
@@ -737,7 +786,8 @@ const StudentProfile = () => {
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
                     {activeTab === 'courses' && (
                         <div className="w-full">
@@ -745,44 +795,21 @@ const StudentProfile = () => {
                         </div>
                     )}
 
-                    {activeTab === 'academic' && (
-                        <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-sm shadow-xs">
-                            <div className="border-b border-slate-100 pb-4 mb-6">
-                                <h3 className="text-xl font-black text-slate-900">Academic Qualifications & Preferences</h3>
-                                <p className="text-xs text-slate-400">Class level and test track registered in your profile</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="p-6 bg-slate-50 border border-slate-200 rounded-sm">
-                                    <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-sm flex items-center justify-center mb-3">
-                                        <GraduationCap size={20} />
-                                    </div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Enrolled Class</p>
-                                    <p className="text-2xl font-black text-slate-900 mt-1">{studentData.currentClass ? `Class ${studentData.currentClass}` : 'Not Set'}</p>
-                                </div>
-
-                                <div className="p-6 bg-blue-50 border border-blue-100 rounded-sm">
-                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-sm flex items-center justify-center mb-3">
-                                        <GraduationCap size={20} />
-                                    </div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Enrolled Class</p>
-                                    <p className="text-2xl font-black text-slate-900 mt-1">{studentData.currentClass ? `Class ${studentData.currentClass}` : 'Not Set'}</p>
-                                </div>
-
-                                <div className="p-6 bg-blue-50 border border-blue-100 rounded-sm">
-                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-sm flex items-center justify-center mb-3">
-                                        <BookOpen size={20} />
-                                    </div>
-                                    <p className="text-xs font-bold text-blue-500 uppercase tracking-wider">Target Course / Exam</p>
-                                    <p className="text-2xl font-black text-blue-950 mt-1">{studentData.interestedCourse || 'Standard Batch'}</p>
-                                </div>
-                            </div>
+                    {activeTab === 'tests' && (
+                        <div className="w-full">
+                            <StudentTestPanel isEmbedded={true} initialFilter="all" onSwitchTab={() => setActiveTab('completed-tests')} />
                         </div>
                     )}
 
-                    {activeTab === 'tests' && (
+                    {activeTab === 'completed-tests' && (
                         <div className="w-full">
-                            <StudentTestPanel isEmbedded={true} initialFilter="completed" />
+                            <StudentTestPanel isEmbedded={true} initialFilter="completed" onSwitchTab={() => setActiveTab('tests')} />
+                        </div>
+                    )}
+
+                    {activeTab === 'scholarship-test' && (
+                        <div className="w-full">
+                            <ScholarshipDashboard studentId={getStudentId()} studentData={studentData} />
                         </div>
                     )}
                 </main>

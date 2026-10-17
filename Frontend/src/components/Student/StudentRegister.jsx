@@ -4,6 +4,7 @@ import api from '../../services/endpoints';
 import { toast } from 'react-toastify';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, BookOpen, Check, ChevronRight, ChevronLeft, Globe, Apple, Mail, ShieldCheck, RefreshCw, CheckCircle2 } from 'lucide-react';
+import GoogleAuthButton from './GoogleAuthButton';
 
 const DISPOSABLE_DOMAINS = [
   "mailinator.com", "tempmail.com", "temp-mail.org", "10minutemail.com",
@@ -254,10 +255,23 @@ const StudentRegistration = () => {
               </div>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900 mb-1 tracking-tight">Create student account</h1>
               <p className="text-sm text-gray-400">Join the Roots Classes learning community.</p>
             </div>
+
+            {/* Quick Google Signup */}
+            {step === 1 && (
+              <div className="mb-5">
+                <GoogleAuthButton mode="signup" buttonText="Sign up with Google" />
+                <div className="relative my-4 flex items-center justify-center">
+                  <div className="w-full border-t border-gray-100" />
+                  <span className="absolute bg-white px-3 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                    Or register with email
+                  </span>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleRegister} className="space-y-5">
               {/* Step 1: Identity */}
@@ -476,10 +490,11 @@ const StudentRegistration = () => {
               </div>
             </form>
 
-            <div className="mt-6 flex items-center justify-center gap-4">
-              <button className="w-10 h-10 flex items-center justify-center border border-gray-100 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-all"><Apple size={18} /></button>
-              <button className="w-10 h-10 flex items-center justify-center border border-gray-100 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-all"><Globe size={18} /></button>
-            </div>
+            {step > 1 && (
+              <div className="mt-5">
+                <GoogleAuthButton mode="signup" buttonText="Sign up with Google instead" />
+              </div>
+            )}
           </div>
 
           <div className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mt-6">

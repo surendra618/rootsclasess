@@ -3,7 +3,8 @@ import api from '../../services/endpoints.js';
 import axios from 'axios';
 import useStudentStore from '../../Store/studentstore.js';
 import { toast } from 'react-toastify';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const tiers = [
   {
@@ -42,32 +43,33 @@ const eligibility = [
   { icon: '🏅', text: 'State/national olympiad medal holders get direct 50% scholarship' },
 ];
 
-const inputCls = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-sm outline-none focus:border-[#0078FF] focus:ring-2 focus:ring-blue-100 transition disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed';
-const selectCls = inputCls + ' bg-white appearance-none cursor-pointer';
+const inputCls = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-sm outline-none focus:border-[#0078FF] focus:ring-2 focus:ring-blue-100 transition';
+const selectCls = 'w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-md text-sm outline-none focus:border-[#0078FF] focus:ring-2 focus:ring-blue-100 transition appearance-none cursor-pointer text-gray-800';
 const labelCls = 'block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2';
 
-// Helper to convert raw class value (e.g. "8", "class-8") to the correct schema format
+// Helper to convert raw class value (e.g. "8", "8th", "class-8") to the correct schema format
 const normalizeClassValue = (value) => {
   if (!value) return '';
-  // Already correct format
-  if (['class-8', 'class-9', 'class-10', 'class-11', 'class-12', 'dropper'].includes(value)) {
-    return value;
+  const str = value.toString().toLowerCase().trim();
+  if (['class-8', 'class-9', 'class-10', 'class-11', 'class-12', 'dropper'].includes(str)) {
+    return str;
   }
-  // Convert numeric or shorthand to class-*
-  const normalized = value.toString().toLowerCase();
-  if (normalized === '8') return 'class-8';
-  if (normalized === '9') return 'class-9';
-  if (normalized === '10') return 'class-10';
-  if (normalized === '11') return 'class-11';
-  if (normalized === '12') return 'class-12';
-  if (normalized === 'dropper') return 'dropper';
+  if (str.includes('8')) return 'class-8';
+  if (str.includes('9')) return 'class-9';
+  if (str.includes('10')) return 'class-10';
+  if (str.includes('11')) return 'class-11';
+  if (str.includes('12')) return 'class-12';
+  if (str.includes('drop')) return 'dropper';
   return '';
 };
 
 const ScholarshipForm = () => {
   const { student } = useStudentStore();
+  const navigate = useNavigate();
   const [loadingData, setLoadingData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [appliedData, setAppliedData] = useState(null);
 
   const [formData, setFormData] = useState({
     program: '',
@@ -80,27 +82,35 @@ const ScholarshipForm = () => {
   useEffect(() => {
     const fetchStudentData = async () => {
       if (!student?._id) {
-        toast.info("Please login to auto-fill your details");
         return;
       }
 
       setLoadingData(true);
       try {
+        // Check if student has already applied
+        try {
+          const schRes = await axios.post(api.scholarship.getSchollership, { studentId: student._id });
+          if (schRes.data?.success && schRes.data.data) {
+            setAlreadyApplied(true);
+            setAppliedData(schRes.data.data);
+          }
+        } catch (err) {
+          // not applied yet
+        }
+
         const res = await axios.post(api.student.getStudent, { studentId: student._id });
-        if (res.data.success && res.data.user) {
+        if (res.data?.success && res.data.user) {
           const userData = res.data.user;
-          // Normalize the class value from the backend (it might be "8" or "class-8")
-          const normalizedClass = normalizeClassValue(userData.currentClass);
+          const normalizedClass = normalizeClassValue(userData.currentClass || userData.className);
           setFormData(prev => ({
             ...prev,
-            email: userData.email || '',
-            phone: userData.phone || '',
-            studentClass: normalizedClass || ''
+            email: prev.email || userData.email || '',
+            phone: prev.phone || userData.phone || '',
+            studentClass: prev.studentClass || normalizedClass || ''
           }));
         }
       } catch (error) {
         console.error("Error fetching student data:", error);
-        toast.error("Failed to fetch registration data. Please fill details manually if needed.");
       } finally {
         setLoadingData(false);
       }
@@ -111,9 +121,9 @@ const ScholarshipForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // If it's the studentClass field, ensure we store the correct enum value
-    if (name === 'studentClass') {
-      setFormData(p => ({ ...p, studentClass: value }));
+    if (name === 'phone') {
+      const cleanPhone = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(p => ({ ...p, phone: cleanPhone }));
     } else {
       setFormData(p => ({ ...p, [name]: value }));
     }
@@ -123,13 +133,33 @@ const ScholarshipForm = () => {
     e.preventDefault();
     if (!student?._id) {
       toast.error("Please login to apply for scholarship");
+      navigate('/stdlogin?redirect=/scholarship');
       return;
     }
 
-    // Final validation: ensure studentClass is one of the allowed enum values
+    if (!formData.program) {
+      toast.error("Please select a Program (Foundation, Medical, or Engineering)");
+      return;
+    }
+
     const allowedClasses = ['class-8', 'class-9', 'class-10', 'class-11', 'class-12', 'dropper'];
     if (!allowedClasses.includes(formData.studentClass)) {
-      toast.error("Please select a valid class from the list.");
+      toast.error("Please select your class from the dropdown list.");
+      return;
+    }
+
+    if (!formData.lookingForCategory) {
+      toast.error("Please select what you are looking for.");
+      return;
+    }
+
+    if (!formData.email || !formData.email.includes('@')) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (!formData.phone || formData.phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number.");
       return;
     }
 
@@ -139,14 +169,19 @@ const ScholarshipForm = () => {
       const payload = {
         ...formData,
         studentId: student._id,
-        // Ensure program is exactly as in schema (already correct)
-        // lookingForCategory is correct
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim()
       };
       const res = await axios.post(api.scholarship.apply, payload);
       toast.success(res?.data?.message || 'Scholarship Applied Successfully');
+      setAlreadyApplied(true);
+      setAppliedData(res?.data?.data || payload);
     } catch (error) {
       const message = error?.response?.data?.message || '';
-      if (message.toLowerCase().includes('already applied')) toast.error('⚠️ You have already applied for scholarship');
+      if (message.toLowerCase().includes('already applied')) {
+        toast.error('⚠️ You have already applied for scholarship');
+        setAlreadyApplied(true);
+      }
       else if (message.toLowerCase().includes('not eligible')) toast.error('❌ You are not eligible for scholarship');
       else toast.error(message || 'Something went wrong');
     } finally {
@@ -379,29 +414,77 @@ const ScholarshipForm = () => {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                  {loadingData && (
-                    <div className="flex flex-col items-center justify-center py-12 gap-3">
-                      <Loader2 className="w-8 h-8 text-[#FB0500] animate-spin" />
-                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Fetching your data...</p>
+                {alreadyApplied ? (
+                  <div className="p-8 text-center space-y-6">
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-black shadow-xs">
+                      ✓
                     </div>
-                  )}
+                    <div>
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Application Active
+                      </span>
+                      <h3 className="text-xl sm:text-2xl font-black text-gray-900 mt-2">
+                        Scholarship Application Registered!
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1 max-w-md mx-auto">
+                        You have applied for the <strong>{appliedData?.program || formData.program || 'Target'} Program</strong> ({appliedData?.studentClass || formData.studentClass}).
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Your next step is to attempt your official Roots Scholarship Test from your Student Dashboard.
+                      </p>
+                    </div>
 
-                  {!loadingData && (
-                    <>
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/stdprofile?tab=scholarship-test')}
+                        className="w-full sm:w-auto px-6 py-3.5 bg-[#FB0500] hover:bg-red-700 text-white font-black text-xs rounded-md shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <span>Attempt Scholarship Test in Dashboard</span>
+                        <span>→</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAlreadyApplied(false)}
+                        className="text-xs font-bold text-gray-500 hover:text-gray-800 underline cursor-pointer"
+                      >
+                        Edit / Update Form
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                    {loadingData && (
+                      <div className="flex flex-col items-center justify-center py-12 gap-3">
+                        <Loader2 className="w-8 h-8 text-[#FB0500] animate-spin" />
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Fetching your data...</p>
+                      </div>
+                    )}
+
+                    {!loadingData && (
+                      <>
                       {/* Program selection */}
                       <div>
-                        <label className={labelCls}>Select Program <span className="text-[#FB0500]">*</span></label>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className={labelCls}>Select Program <span className="text-[#FB0500]">*</span></label>
+                          {formData.program && (
+                            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 size={13} /> Selected: {formData.program}
+                            </span>
+                          )}
+                        </div>
                         <div className="grid grid-cols-3 gap-3">
                           {['Foundation', 'Medical', 'Engineering'].map(p => (
                             <button key={p} type="button"
                               onClick={() => setFormData(prev => ({ ...prev, program: p }))}
-                              className={`py-3 rounded-md text-sm font-bold border-2 transition-all ${formData.program === p
-                                ? 'bg-[#FB0500] text-white border-[#FB0500] shadow-sm'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-[#FB0500]/40'
-                                }`}
+                              className={`py-3 px-2 rounded-md text-sm font-bold border-2 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                                formData.program === p
+                                  ? 'bg-[#FB0500] text-white border-[#FB0500] shadow-sm'
+                                  : 'bg-white text-gray-700 border-gray-200 hover:border-[#FB0500]/50'
+                              }`}
                             >
-                              {p}
+                              {formData.program === p && <span>✓</span>}
+                              <span>{p}</span>
                             </button>
                           ))}
                         </div>
@@ -411,31 +494,43 @@ const ScholarshipForm = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                           <label className={labelCls}>Your Class <span className="text-[#FB0500]">*</span></label>
-                          <select
-                            name="studentClass"
-                            value={formData.studentClass}
-                            onChange={handleChange}
-                            required
-                            className={selectCls}
-                          >
-                            <option value="">Select class</option>
-                            <option value="class-8">8th Class</option>
-                            <option value="class-9">9th Class</option>
-                            <option value="class-10">10th Class</option>
-                            <option value="class-11">11th Class</option>
-                            <option value="class-12">12th Class</option>
-                            <option value="dropper">Dropper</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              name="studentClass"
+                              value={formData.studentClass}
+                              onChange={handleChange}
+                              required
+                              className={selectCls}
+                            >
+                              <option value="">Select class</option>
+                              <option value="class-8">8th Class</option>
+                              <option value="class-9">9th Class</option>
+                              <option value="class-10">10th Class</option>
+                              <option value="class-11">11th Class</option>
+                              <option value="class-12">12th Class</option>
+                              <option value="dropper">Dropper</option>
+                            </select>
+                            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
                         </div>
                         <div>
                           <label className={labelCls}>Looking For <span className="text-[#FB0500]">*</span></label>
-                          <select name="lookingForCategory" value={formData.lookingForCategory} onChange={handleChange} required className={selectCls}>
-                            <option value="">Select option</option>
-                            <option value="scholarship">Scholarship Programs</option>
-                            <option value="admission">Admission Guidance</option>
-                            <option value="counseling">Career Counseling</option>
-                            <option value="exam-prep">Exam Preparation</option>
-                          </select>
+                          <div className="relative">
+                            <select 
+                              name="lookingForCategory" 
+                              value={formData.lookingForCategory} 
+                              onChange={handleChange} 
+                              required 
+                              className={selectCls}
+                            >
+                              <option value="">Select option</option>
+                              <option value="scholarship">Scholarship Programs</option>
+                              <option value="admission">Admission Guidance</option>
+                              <option value="counseling">Career Counseling</option>
+                              <option value="exam-prep">Exam Preparation</option>
+                            </select>
+                            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
                         </div>
                       </div>
 
@@ -448,7 +543,6 @@ const ScholarshipForm = () => {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            readOnly={!!student?._id}
                             placeholder="your@email.com"
                             required
                             className={inputCls}
@@ -461,8 +555,7 @@ const ScholarshipForm = () => {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            readOnly={!!student?._id}
-                            placeholder="10-digit mobile"
+                            placeholder="10-digit mobile number"
                             maxLength={10}
                             required
                             className={inputCls}
@@ -472,10 +565,10 @@ const ScholarshipForm = () => {
 
                       {/* Terms */}
                       <div className="flex items-start gap-3 py-2">
-                        <input type="checkbox" id="sch-terms" required className="mt-0.5 w-4 h-4 accent-[#FB0500]" />
-                        <label htmlFor="sch-terms" className="text-xs text-gray-500 leading-relaxed">
+                        <input type="checkbox" id="sch-terms" required className="mt-0.5 w-4 h-4 accent-[#FB0500] cursor-pointer" />
+                        <label htmlFor="sch-terms" className="text-xs text-gray-500 leading-relaxed cursor-pointer">
                           I agree to receive test information and scholarship updates via WhatsApp/Email. I accept Roots Classes{' '}
-                          <a href="/termsandconditions" className="text-[#FB0500] hover:underline">Terms & Conditions</a>.
+                          <a href="/termsandconditions" className="text-[#FB0500] hover:underline" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>.
                         </label>
                       </div>
 
@@ -504,6 +597,7 @@ const ScholarshipForm = () => {
                     </>
                   )}
                 </form>
+                )}
               </div>
             </div>
           </div>

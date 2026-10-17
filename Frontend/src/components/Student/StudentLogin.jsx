@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useNavigate, Link } from 'react-router-dom';
 import useStudentStore from '../../Store/studentstore';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ChevronLeft, Globe, Apple, Key, ArrowLeft } from 'lucide-react';
+import GoogleAuthButton from './GoogleAuthButton';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -439,7 +440,7 @@ const LoginPage = () => {
                   </div>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-4">
                   <h1 className="text-2xl font-black text-gray-900 mb-1 tracking-tight">Login to account</h1>
                   <p className="text-xs text-gray-400">Please enter your verified credentials.</p>
                 </div>
@@ -496,15 +497,15 @@ const LoginPage = () => {
                   </button>
                 </form>
 
-                {/* Social Login Buttons */}
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <button type="button" className="flex items-center justify-center gap-2 py-2.5 border border-gray-100 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all">
-                    <Apple size={15} /> Apple
-                  </button>
-                  <button type="button" className="flex items-center justify-center gap-2 py-2.5 border border-gray-100 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all">
-                    <Globe size={15} /> Google
-                  </button>
+                {/* Social Login Divider & Google Button */}
+                <div className="relative my-4 flex items-center justify-center">
+                  <div className="w-full border-t border-gray-100" />
+                  <span className="absolute bg-white px-3 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                    Or continue with
+                  </span>
                 </div>
+
+                <GoogleAuthButton mode="login" buttonText="Continue with Google" />
               </div>
 
               <div className="flex justify-center items-center text-[10px] font-black text-gray-400 uppercase tracking-widest mt-6 pt-4 border-t border-gray-100">

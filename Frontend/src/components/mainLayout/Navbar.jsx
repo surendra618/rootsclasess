@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, UserCircle } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import useStudentStore from '../../Store/studentstore';
-import { SiCoursera } from 'react-icons/si';
 import NotificationDropdown from '../Notification/NotificationDropdown';
 
 const navItems = [
@@ -188,16 +187,10 @@ const Navbar = () => {
                             </button>
                           )}
                           {isStudent() && (
-                            <>
-                              <button onClick={() => { navigate('/stdprofile'); setIsDropdownOpen(false); }}
-                                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <UserCircle size={16} className="text-gray-400" />My Profile
-                              </button>
-                              <button onClick={() => { navigate('/purchescourse'); setIsDropdownOpen(false); }}
-                                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <SiCoursera size={16} className="text-gray-400" />My Courses
-                              </button>
-                            </>
+                            <button onClick={() => { navigate('/stdprofile'); setIsDropdownOpen(false); }}
+                              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <UserCircle size={16} className="text-gray-400" />My Profile
+                            </button>
                           )}
                         </div>
                         <div className="border-t border-gray-100 pt-1">
@@ -272,14 +265,9 @@ const Navbar = () => {
                       </Link>
                     )}
                     {isStudent() && (
-                      <>
-                        <Link to="/stdprofile" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm text-gray-700 hover:bg-gray-50">
-                          <UserCircle size={16} className="text-gray-400" />My Profile
-                        </Link>
-                        <Link to="/purchescourse" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm text-gray-700 hover:bg-gray-50">
-                          <SiCoursera size={16} className="text-gray-400" />My Courses
-                        </Link>
-                      </>
+                      <Link to="/stdprofile" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm text-gray-700 hover:bg-gray-50">
+                        <UserCircle size={16} className="text-gray-400" />My Profile
+                      </Link>
                     )}
                     <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-2.5 rounded-sm text-sm text-red-600 hover:bg-red-50">
                       <LogOut size={16} />Logout

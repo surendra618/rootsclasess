@@ -67,21 +67,43 @@ const AdminSidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
   const toggleSubmenu = (menuName) => setOpenSubmenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
-  const isActive = (path) => (path === '/admin' || path === '/instructor/dashboard') ? location.pathname === path : location.pathname.startsWith(path);
+  const isActive = (path) => {
+    if (path === '/admin' || path === '/instructor/dashboard') return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + '/') || 
+      (path === '/admin/all-courses' && location.pathname === '/admin/allcourses') ||
+      (path === '/admin/all-students' && location.pathname === '/admin/allstudent') ||
+      (path === '/admin/course-categories' && location.pathname === '/admin/coursecategory') ||
+      (path === '/admin/enrollments' && (location.pathname === '/admin/enrollment' || location.pathname === '/admin/enrollments')) ||
+      (path === '/admin/test-purchases' && (location.pathname === '/admin/test-purchases' || location.pathname === '/admin/test-enrollments')) ||
+      (path === '/admin/test-management' && (
+        location.pathname === '/admin/test-management' || 
+        location.pathname === '/admin/create-test' || 
+        location.pathname === '/admin/createtest' ||
+        location.pathname === '/admin/manage-tests' ||
+        location.pathname === '/admin/tests'
+      )) ||
+      (path === '/admin/scholarship-results' && location.pathname === '/admin/schollershipresult') ||
+      (path === '/admin/testimonials' && location.pathname === '/admin/testimonial') ||
+      (path === '/admin/manage-slider' && location.pathname === '/admin/slider') ||
+      (path === '/admin/blogs' && location.pathname === '/admin/blog');
+  };
 
   const menuItems = userData.role === 'admin' ? [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-    { name: 'All Students', path: '/admin/allstudent', icon: Users },
+    { name: 'All Students', path: '/admin/all-students', icon: Users },
     { name: 'Course Manager', icon: BookOpen, submenu: [
-        { name: 'All Courses', path: '/admin/allcourses', icon: BookOpen },
-        { name: 'Categories', path: '/admin/coursecategory', icon: BarChart },
-        { name: 'Enrollments', path: '/admin/enrollment', icon: Sparkles }
+        { name: 'All Courses', path: '/admin/all-courses', icon: BookOpen },
+        { name: 'Categories', path: '/admin/course-categories', icon: BarChart },
+        { name: 'Enrollments', path: '/admin/enrollments', icon: Sparkles }
     ]},
-    { name: 'Testimonials', path: '/admin/testimonial', icon: PiStudentBold },
-    { name: 'UI Controls', path: '/admin/slider', icon: LuSlidersHorizontal },
-    { name: 'Blogs', path: '/admin/blog', icon: FileText },
-    { name: 'Scholarship test', path: '/admin/createtest', icon: SiTestcafe },
-    { name: "Scholarship Reaults", path: '/admin/schollershipresult', icon: FaGoogleScholar },
+    { name: 'Test Management', path: '/admin/test-management', icon: SiTestcafe },
+    { name: 'Test Purchases (₹)', path: '/admin/test-purchases', icon: Sparkles },
+    { name: 'Scholarship Results', path: '/admin/scholarship-results', icon: FaGoogleScholar },
+    { name: 'Testimonials', path: '/admin/testimonials', icon: PiStudentBold },
+    { name: 'UI Sliders', path: '/admin/manage-slider', icon: LuSlidersHorizontal },
+    { name: 'Blogs', path: '/admin/blogs', icon: FileText },
+    { name: 'Faculty Team', path: '/admin/faculty', icon: PiChalkboard },
+    { name: 'Success Stories', path: '/admin/success-stories', icon: Sparkles },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ] : userData.role === 'instructor' ? [
     { name: 'Dashboard', path: '/instructor/dashboard', icon: LayoutDashboard },

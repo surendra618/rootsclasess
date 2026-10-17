@@ -131,7 +131,6 @@ const PurchasedCourse = ({ isEmbedded = false }) => {
         const navItems = [
             { id: 'overview', label: 'Overview Dashboard', icon: LayoutDashboard, isLink: '/stdprofile' },
             { id: 'courses', label: 'My Enrolled Courses', icon: BookOpen, active: true },
-            { id: 'academic', label: 'Academic Details', icon: GraduationCap, isLink: '/stdprofile' },
             { id: 'tests', label: 'Online Mock Tests', icon: FileText, isLink: '/test' },
         ];
 

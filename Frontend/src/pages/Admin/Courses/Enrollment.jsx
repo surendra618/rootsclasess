@@ -1,13 +1,19 @@
 // pages/Enrollment.jsx
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import useStudentStore from '../../../Store/studentstore';
 import api from '../../../services/adminendpoint';
 import Loader from '../../../components/AdminComponent/Loader';
+import TestPurchases from '../TestPurchases';
 
-const Enrollment = () => {
+const Enrollment = ({ defaultTab }) => {
     const { student } = useStudentStore();  
     const studentId = student?._id;  
+    
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialTab = defaultTab || (searchParams.get('tab') === 'tests' ? 'tests' : 'courses');
+    const [activeTab, setActiveTab] = useState(initialTab);
   
     const [enrollments, setEnrollments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -210,21 +216,70 @@ const Enrollment = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-6 md:p-8 space-y-6">
             {/* Header Section */}
-            <div className="bg-white rounded-lg border border-gray-200/80 p-4 sm:p-5 shadow-xs flex items-center justify-between sticky top-0 z-20">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="w-2 h-2 rounded-full bg-[#0078FF]"></span>
-                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Registrations</span>
+            <div className="bg-white rounded-lg border border-gray-200/80 p-4 sm:p-5 shadow-xs sticky top-0 z-20 space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="w-2 h-2 rounded-full bg-[#0078FF]"></span>
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Registrations & Purchases</span>
+                        </div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Enrollment Management</h1>
+                        <p className="text-xs text-gray-500 mt-0.5">Track and manage course enrollments and mock test series purchases</p>
                     </div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Enrollment Management</h1>
-                    <p className="text-xs text-gray-500 mt-0.5">Track and manage all course enrollments and payment statuses</p>
+                    {activeTab === 'courses' && (
+                        <button onClick={GetAllPurchesCourse} className="px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-all shadow-xs cursor-pointer">
+                            🔄 Refresh
+                        </button>
+                    )}
                 </div>
-                <button onClick={GetAllPurchesCourse} className="px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-all shadow-xs">
-                    🔄 Refresh
-                </button>
+
+                {/* Tab switchers */}
+                <div className="flex items-center gap-3 border-t border-gray-100 pt-3">
+                    <button
+                        onClick={() => {
+                            setActiveTab('courses');
+                            setSearchParams({ tab: 'courses' });
+                        }}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+                            activeTab === 'courses'
+                                ? 'bg-blue-50 text-[#0078FF] border border-blue-200 shadow-xs'
+                                : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                        }`}
+                    >
+                        <span>📚 Course Enrollments</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            activeTab === 'courses' ? 'bg-[#0078FF] text-white' : 'bg-gray-200 text-gray-700'
+                        }`}>
+                            {enrollments.length}
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setActiveTab('tests');
+                            setSearchParams({ tab: 'tests' });
+                        }}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+                            activeTab === 'tests'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs'
+                                : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                        }`}
+                    >
+                        <span>📝 Mock Test Purchases (₹)</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            activeTab === 'tests' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                            ₹ Paid Tests
+                        </span>
+                    </button>
+                </div>
             </div>
 
-            <div className="space-y-6">
+            {activeTab === 'tests' ? (
+                <TestPurchases isEmbedded={true} />
+            ) : (
+                <>
+                <div className="space-y-6">
                 {/* Filters Section */}
                 {enrollments.length > 0 && (
                     <div className="bg-white rounded-lg border border-gray-200/80 shadow-xs p-4 sm:p-5">
@@ -771,6 +826,8 @@ const Enrollment = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            </>
             )}
         </div>
     );

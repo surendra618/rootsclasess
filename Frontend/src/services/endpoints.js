@@ -10,7 +10,8 @@ const api = {
         sendOtp:Base_Url+"/student/send-otp",
         verifyOTP:Base_Url+"/student/verify-otp",
         resetPassword:Base_Url+"/student/reset-password",
-        getTestforStudent: Base_Url+"/student/get-testfor-student"
+        getTestforStudent: Base_Url+"/student/get-testfor-student",
+        googleAuth: Base_Url+"/student/google-auth"
     },
     course:{
         getcourses:Base_Url+"/course/get_courses",
@@ -55,14 +56,17 @@ const api = {
      },
      scholarship:{
         apply:Base_Url+"/scholarship/apply",
-
-       enrollCourse:Base_Url+"/enrollment/enroll-course",
-       getSchollership:Base_Url+"/scholarship/student-schollership"
+        enrollCourse:Base_Url+"/enrollment/enroll-course",
+        getSchollership:Base_Url+"/scholarship/student-schollership",
+        getScholarship:Base_Url+"/scholarship/student-scholarship",
+        getScholarshipTest:Base_Url+"/scholarship/get-scholarship-test"
      },
      payment:{
        createPayment:Base_Url+"/payment/create-payment",
        verifyPayment:Base_Url+"/payment/verify-payment",
-       getPurchesCourse:Base_Url+"/payment/get-my-course"
+       getPurchesCourse:Base_Url+"/payment/get-my-course",
+       getPurchasedCourses:Base_Url+"/payment/get-my-course",
+       getPurchasedTests:Base_Url+"/payment/get-purchased-tests"
      },
      successStory: {
        add: Base_Url + "/success-story/add",

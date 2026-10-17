@@ -6,10 +6,12 @@ import { useEffect } from "react";
 import socketService from "./services/socket";
 import { toast } from "react-toastify";
 import useNotificationStore from "./Store/notificationStore";
+import { useTestStore } from "./Store/testStore";
 
 const StudentLayout = () => {
   const location = useLocation();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const isTestActive = useTestStore((state) => state.isTestActive);
 
   useEffect(() => {
     socketService.connect();
@@ -36,9 +38,21 @@ const StudentLayout = () => {
     };
   }, []);
 
-  const hideLayoutRoutes = [];
+  const hideLayoutRoutes = [
+    '/stdprofile',
+    '/purchescourse',
+    '/dashboard',
+    '/student/dashboard',
+    '/student/profile'
+  ];
 
-  const shouldHideLayout = hideLayoutRoutes.includes(location.pathname);
+  const shouldHideLayout = isTestActive || hideLayoutRoutes.some(route => 
+    location.pathname === route || 
+    location.pathname.startsWith('/stdprofile') || 
+    location.pathname.startsWith('/purchescourse') ||
+    location.pathname.startsWith('/student/dashboard') ||
+    location.pathname.startsWith('/student/profile')
+  );
 
   return (
     <>
