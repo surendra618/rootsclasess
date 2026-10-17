@@ -89,7 +89,8 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-[60] w-full">
+    <>
+      <header className={`fixed top-0 left-0 right-0 z-[60] w-full bg-white transition-shadow duration-200 ${scrolled ? 'shadow-[0_2px_15px_rgba(0,0,0,0.08)]' : ''}`}>
       {/* Announcement bar (Glassmorphism Light) */}
       <div className="relative overflow-hidden bg-[#fdfdfd]/80 backdrop-blur-md border-b border-gray-200/50 py-1.5 px-4 text-center">
         {/* Subtle decorative color accents */}
@@ -289,6 +290,9 @@ const Navbar = () => {
         )}
       </nav>
     </header>
+    {/* Spacer to prevent layout shift under fixed navbar */}
+    <div className="h-[93px] w-full shrink-0 pointer-events-none" aria-hidden="true" />
+  </>
   );
 };
 

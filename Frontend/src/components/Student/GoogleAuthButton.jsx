@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/endpoints';
 import useStudentStore from '../../Store/studentstore';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from '../../config/firebase';
-import { X, ShieldCheck, Mail, User as UserIcon, Phone, ExternalLink } from 'lucide-react';
 
 export const GoogleIcon = () => (
   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -37,10 +36,6 @@ const GoogleAuthButton = ({
   const navigate = useNavigate();
   const { setStudent } = useStudentStore();
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const [googlePhone, setGooglePhone] = useState('');
 
   const handleAuthSuccess = (data) => {
     const user = data.user || data.student;
@@ -63,7 +58,7 @@ const GoogleAuthButton = ({
     }
   };
 
-  // Check for redirect result on component mount (especially for mobile browsers)
+  // Handle redirect result when user returns from official Google login page
   useEffect(() => {
     if (!auth) return;
 
@@ -91,6 +86,7 @@ const GoogleAuthButton = ({
           err.code !== 'auth/cancelled-popup-request'
         ) {
           console.error("Firebase redirect result error:", err);
+          toast.error(err.message || 'Google authentication error');
         }
       })
       .finally(() => {
@@ -102,33 +98,16 @@ const GoogleAuthButton = ({
     };
   }, []);
 
-  const isMobile = () => {
-    return (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-      window.innerWidth < 768
-    );
-  };
-
   const handleButtonClick = async () => {
     if (!auth || !googleProvider) {
-      setShowModal(true);
+      toast.error('Google service is initializing. Please try again.');
       return;
     }
 
     setLoading(true);
 
-    // On mobile devices, browsers often block popups - use redirect directly
-    if (isMobile() && signInWithRedirect) {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        return;
-      } catch (redirectErr) {
-        console.warn('Mobile redirect failed, trying popup:', redirectErr);
-      }
-    }
-
-    // Try popup for desktop or mobile fallback
     try {
+      // 1. Direct official Google sign in popup
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
       const idToken = await firebaseUser.getIdToken();
@@ -143,11 +122,10 @@ const GoogleAuthButton = ({
 
       handleAuthSuccess(res.data);
       setLoading(false);
-      return;
     } catch (firebaseErr) {
-      console.warn('Firebase popup notice:', firebaseErr?.code, firebaseErr?.message);
+      console.warn('Firebase login notice:', firebaseErr?.code, firebaseErr?.message);
       
-      // If user simply closed the popup, do not show modal
+      // If user closed or cancelled the popup, gracefully stop loading
       if (
         firebaseErr.code === 'auth/popup-closed-by-user' ||
         firebaseErr.code === 'auth/cancelled-popup-request'
@@ -156,61 +134,31 @@ const GoogleAuthButton = ({
         return;
       }
 
-      // If popup blocked on browser, try redirect
+      // If popup was blocked by browser, seamlessly redirect to official Google page
       if (firebaseErr.code === 'auth/popup-blocked' && signInWithRedirect) {
         try {
           await signInWithRedirect(auth, googleProvider);
           return;
         } catch (rErr) {
-          console.warn("Secondary redirect attempt failed:", rErr);
+          console.warn("Redirect attempt failed:", rErr);
         }
       }
 
       if (firebaseErr.code === 'auth/unauthorized-domain') {
-        toast.info('Domain authorization pending in Firebase. You can use instant verification below.');
-      } else if (firebaseErr.message) {
-        console.error('Firebase Auth Error:', firebaseErr);
+        toast.error('Domain authorization pending in Firebase Console.');
+      } else {
+        // Fallback to seamless official redirect directly
+        if (signInWithRedirect) {
+          try {
+            await signInWithRedirect(auth, googleProvider);
+            return;
+          } catch (rErr) {
+            toast.error(firebaseErr.message || 'Google sign in failed');
+          }
+        } else {
+          toast.error(firebaseErr.message || 'Google sign in failed');
+        }
       }
-
-      setShowModal(true);
-      setLoading(false);
-    }
-  };
-
-  const handleManualGoogleSubmit = async (e) => {
-    e.preventDefault();
-    const cleanEmail = googleEmail.trim().toLowerCase();
-    if (!cleanEmail) {
-      toast.error('Please enter your Google Email');
-      return;
-    }
-    if (!cleanEmail.includes('@')) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
-    const cleanPhone = googlePhone ? googlePhone.trim().replace(/\D/g, '') : '';
-    if (cleanPhone && cleanPhone.length !== 10) {
-      toast.error('Please enter a valid 10-digit mobile number');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const googleId = 'gid_' + Math.random().toString(36).substring(2, 12);
-      const res = await axios.post(api.student.googleAuth, {
-        email: cleanEmail,
-        fullName: googleName.trim() || cleanEmail.split('@')[0],
-        googleId: googleId,
-        phone: cleanPhone,
-        profileImage: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(googleName || cleanEmail)}`
-      });
-
-      setShowModal(false);
-      handleAuthSuccess(res.data);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to authenticate with Google');
-    } finally {
       setLoading(false);
     }
   };
@@ -218,143 +166,15 @@ const GoogleAuthButton = ({
   const defaultText = mode === 'signup' ? 'Sign up with Google' : 'Continue with Google';
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={handleButtonClick}
-        disabled={loading}
-        className={`w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white hover:bg-slate-50 active:scale-[0.99] border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
-      >
-        <GoogleIcon />
-        <span>{loading ? 'Connecting Google Account...' : buttonText || defaultText}</span>
-      </button>
-
-      {/* Google Sign In / Sign Up Modal */}
-      {showModal && (
-        <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setShowModal(false)}
-        >
-          <div 
-            className="bg-white rounded-2xl border border-slate-100 max-w-sm w-full p-6 shadow-2xl overflow-hidden animate-slideUp text-left"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-xs">
-                  <GoogleIcon />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    {mode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">Roots Classes • Google Verification</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowModal(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-3 bg-blue-50/60 border border-blue-100 rounded-xl mb-4 flex items-center gap-2">
-              <ShieldCheck size={16} className="text-[#0078FF] shrink-0" />
-              <p className="text-[11px] text-blue-900 font-medium leading-tight">
-                Instant verification using your Google Account details.
-              </p>
-            </div>
-
-            {/* Official Google Redirect Option */}
-            {auth && googleProvider && signInWithRedirect && (
-              <button
-                type="button"
-                onClick={() => {
-                  setLoading(true);
-                  signInWithRedirect(auth, googleProvider).catch((err) => {
-                    setLoading(false);
-                    toast.error('Google Redirect failed. Please use email below.');
-                  });
-                }}
-                className="w-full mb-3.5 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <ExternalLink size={14} className="text-[#0078FF]" />
-                <span>Open Official Google Login Page</span>
-              </button>
-            )}
-
-            <form onSubmit={handleManualGoogleSubmit} className="space-y-3.5">
-              <div>
-                <label className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                  Google Email Address *
-                </label>
-                <div className="relative">
-                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="email"
-                    required
-                    autoFocus
-                    value={googleEmail}
-                    onChange={(e) => setGoogleEmail(e.target.value)}
-                    placeholder="yourname@gmail.com"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#0078FF] focus:bg-white transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                  Your Full Name
-                </label>
-                <div className="relative">
-                  <UserIcon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={googleName}
-                    onChange={(e) => setGoogleName(e.target.value)}
-                    placeholder="e.g. Rahul Sharma"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#0078FF] focus:bg-white transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                  Mobile Number (Optional)
-                </label>
-                <div className="relative">
-                  <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="tel"
-                    value={googlePhone}
-                    onChange={(e) => setGooglePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="10-digit phone number"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#0078FF] focus:bg-white transition"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading || !googleEmail.trim()}
-                  className="w-full py-3 bg-[#0a1628] hover:bg-[#0078FF] active:scale-[0.99] text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <GoogleIcon />
-                  <span>{loading ? 'Verifying...' : mode === 'signup' ? 'Complete Google Signup' : 'Sign in with Google ID'}</span>
-                </button>
-              </div>
-            </form>
-
-            <p className="text-[10px] text-center text-slate-400 mt-4">
-              Secured with Google Identity Authentication.
-            </p>
-          </div>
-        </div>
-      )}
-    </>
+    <button
+      type="button"
+      onClick={handleButtonClick}
+      disabled={loading}
+      className={`w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white hover:bg-slate-50 active:scale-[0.99] border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+    >
+      <GoogleIcon />
+      <span>{loading ? 'Connecting Google Account...' : buttonText || defaultText}</span>
+    </button>
   );
 };
 

@@ -104,6 +104,7 @@ const AdminSidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { name: 'Blogs', path: '/admin/blogs', icon: FileText },
     { name: 'Faculty Team', path: '/admin/faculty', icon: PiChalkboard },
     { name: 'Success Stories', path: '/admin/success-stories', icon: Sparkles },
+    { name: 'Terms & Policies', path: '/admin/policies', icon: Shield },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ] : userData.role === 'instructor' ? [
     { name: 'Dashboard', path: '/instructor/dashboard', icon: LayoutDashboard },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
-import { Pencil, Trash2, Plus, X, Eye, Video } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Eye, Video, SlidersHorizontal } from 'lucide-react';
 import api from '../../services/adminendpoint';
 import Loader from '../../components/AdminComponent/Loader';
 
@@ -316,16 +316,24 @@ const ManageSlider = () => {
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200/80 sticky top-0 z-20 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Manage Sliders</h1>
-            <p className="text-xs text-gray-500 mt-1">Create, edit, and manage homepage sliders.</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="p-1 rounded-md bg-blue-50 text-[#0078FF]">
+                <SlidersHorizontal size={15} />
+              </span>
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                Hero & Carousel Controls
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Manage Sliders</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Create, edit, and manage homepage hero sliders and promotional banners.</p>
           </div>
           <button
             onClick={handleCreateClick}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gray-900 hover:bg-[#0078FF] text-white rounded-md transition-all text-xs font-semibold shadow-xs"
+            className="flex items-center justify-center gap-1.5 bg-[#0078FF] hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all text-xs font-medium shadow-xs cursor-pointer self-start sm:self-auto"
           >
-            <Plus size={16} />
+            <Plus size={15} />
             <span>Add Slider</span>
           </button>
         </div>
@@ -335,13 +343,13 @@ const ManageSlider = () => {
         {/* Mobile Card View - For screens below 768px */}
         <div className="block md:hidden space-y-3 sm:space-y-4">
           {sliders.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm p-8 sm:p-12 text-center">
-              <div className="text-gray-500">
-                <Eye size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-base sm:text-lg">No sliders found</p>
+            <div className="bg-white rounded-xl shadow-xs border border-gray-200/80 p-8 sm:p-12 text-center">
+              <div className="text-gray-400">
+                <Eye size={40} className="mx-auto mb-3 text-gray-300" />
+                <p className="text-sm">No sliders found</p>
                 <button
                   onClick={handleCreateClick}
-                  className="mt-3 text-blue-600 hover:text-blue-700 text-sm"
+                  className="mt-2 text-[#0078FF] hover:underline text-xs font-semibold"
                 >
                   Create your first slider
                 </button>
@@ -349,54 +357,61 @@ const ManageSlider = () => {
             </div>
           ) : (
             sliders.map((slider) => (
-              <div key={slider._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-3 sm:p-4">
-                  <div className="flex gap-3">
-                    {/* Image */}
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100">
-                        {slider.desktopImage || slider.image ? (
-                          <img
-                            src={slider.desktopImage || slider.image}
-                            alt={slider.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/80x80?text=No+Image';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <Eye size={24} />
-                          </div>
-                        )}
+              <div key={slider._id} className="bg-white rounded-xl shadow-xs border border-gray-200/80 overflow-hidden p-3.5 sm:p-4">
+                <div className="flex gap-3">
+                  {/* Image */}
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 border border-gray-200/70">
+                      {slider.desktopImage || slider.image ? (
+                        <img
+                          src={slider.desktopImage || slider.image}
+                          alt={slider.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/80x60?text=No+Image';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <Eye size={18} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold text-gray-900 truncate">
+                        {slider.title || "Slider Image"}
                       </div>
+                      {slider.isDefault && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-medium bg-emerald-50 text-emerald-700 rounded border border-emerald-200 uppercase">
+                          DEFAULT
+                        </span>
+                      )}
                     </div>
+                    <p className="text-xs text-gray-400 font-normal mt-1">
+                      {slider.createdAt ? new Date(slider.createdAt).toLocaleDateString() : "Recent"}
+                    </p>
+                  </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(slider.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-1">
-                      <button
-                        onClick={() => handleEditClick(slider)}
-                        className="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(slider)}
-                        className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                  {/* Actions */}
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      onClick={() => handleEditClick(slider)}
+                      className="p-1.5 rounded-md bg-blue-50 text-[#0078FF] hover:bg-blue-100 border border-blue-200/80 transition cursor-pointer"
+                      title="Edit"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(slider)}
+                      className="p-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/80 transition cursor-pointer"
+                      title="Delete"
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -404,157 +419,180 @@ const ManageSlider = () => {
           )}
         </div>
 
-        {/* Desktop Table View - For screens 768px and above */}
-        <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        {/* Desktop Table View - 100% Fit, Zero Horizontal Scrollbar */}
+        <div className="hidden md:block bg-white rounded-xl shadow-xs border border-gray-200/80 overflow-hidden w-full">
+          <table className="w-full table-fixed text-left border-collapse">
+            <thead>
+              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-gray-500">
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider w-[15%]">
+                  Image
+                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider w-[45%]">
+                  Slider Preview
+                </th>
+                <th className="px-3 py-3.5 text-xs font-semibold uppercase tracking-wider text-center w-[20%]">
+                  Created At
+                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-center w-[20%]">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {sliders.length === 0 ? (
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Image
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Slider Preview
-                  </th>
-
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created At
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <td colSpan="4" className="px-4 py-12 text-center">
+                    <div className="text-gray-400">
+                      <Eye size={40} className="mx-auto mb-3 text-gray-300" />
+                      <p className="text-sm">No sliders found</p>
+                      <button
+                        onClick={handleCreateClick}
+                        className="mt-2 text-[#0078FF] hover:underline text-xs font-semibold cursor-pointer"
+                      >
+                        Create your first slider
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sliders.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="px-4 py-12 text-center">
-                      <div className="text-gray-500">
-                        <Eye size={48} className="mx-auto mb-4 text-gray-400" />
-                        <p className="text-base sm:text-lg">No sliders found</p>
-                        <button
-                          onClick={handleCreateClick}
-                          className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
-                        >
-                          Create your first slider
-                        </button>
+              ) : (
+                sliders.map((slider) => (
+                  <tr key={slider._id} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="px-4 py-3.5 align-middle whitespace-nowrap">
+                      <div className="w-16 h-11 rounded-lg overflow-hidden bg-gray-100 border border-gray-200/70 shadow-xs">
+                        {slider.desktopImage || slider.image ? (
+                          <img
+                            src={slider.desktopImage || slider.image}
+                            alt={slider.title || 'Slider image'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/80x50?text=No+Image';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Eye size={18} />
+                          </div>
+                        )}
                       </div>
                     </td>
-                  </tr>
-                ) : (
-                  sliders.map((slider) => (
-                    <tr key={slider._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100">
-                          {slider.desktopImage || slider.image ? (
-                            <img
-                              src={slider.desktopImage || slider.image}
-                              alt={slider.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/56x56?text=No+Image';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <Eye size={20} />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
+                    <td className="px-4 py-3.5 align-middle">
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-gray-900">Slider Image</div>
+                          <div className="text-sm font-semibold text-gray-900 tracking-tight truncate">
+                            {slider.title || "Slider Image"}
+                          </div>
                           {slider.isDefault && (
-                            <span className="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full border border-green-200">
+                            <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 uppercase tracking-wider">
                               DEFAULT
                             </span>
                           )}
                         </div>
-                      </td>
+                        {slider.subtitle && (
+                          <div className="text-xs text-gray-400 font-normal truncate mt-0.5">
+                            {slider.subtitle}
+                          </div>
+                        )}
+                      </div>
+                    </td>
 
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {new Date(slider.createdAt).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditClick(slider)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(slider)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                    <td className="px-3 py-3.5 align-middle whitespace-nowrap text-xs sm:text-sm text-gray-500 font-normal text-center">
+                      {slider.createdAt ? new Date(slider.createdAt).toLocaleDateString() : "Recent"}
+                    </td>
+                    <td className="px-4 py-3.5 align-middle text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+                        <button
+                          onClick={() => handleEditClick(slider)}
+                          className="p-1.5 rounded-md bg-blue-50 text-[#0078FF] hover:bg-blue-100 border border-blue-200/80 transition cursor-pointer"
+                          title="Edit Slider"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(slider)}
+                          className="p-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/80 transition cursor-pointer"
+                          title="Delete Slider"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
+        {/* Section Divider */}
+        <div className="my-10 border-t border-gray-200/80" />
+
         {/* --- Video Success Stories (Success Stories in Action) Section --- */}
-        <div className="mt-12 mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 border-t pt-12">
+        <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Success Stories in Action</h2>
-            <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Manage video stories and YouTube-based student feedback</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="p-1 rounded-md bg-rose-50 text-[#FB0500]">
+                <Video size={15} />
+              </span>
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                Video Testimonials
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Success Stories in Action</h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Manage video stories and YouTube-based student feedback.</p>
           </div>
           <button
             onClick={() => { resetVForm(); setVShowModal(true); }}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#FB0500] text-white rounded-lg hover:shadow-lg transition-all duration-300 text-sm font-semibold"
+            className="flex items-center justify-center gap-1.5 bg-[#FB0500] hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all text-xs font-medium shadow-xs cursor-pointer self-start sm:self-auto"
           >
-            <Video size={18} />
-            Add Video Story
+            <Video size={15} />
+            <span>Add Video Story</span>
           </button>
         </div>
 
         {/* Mobile Card View for Video Stories - For screens below 768px */}
-        <div className="block md:hidden space-y-3 sm:space-y-4 mb-20">
+        <div className="block md:hidden space-y-3 sm:space-y-4 mb-16">
           {vLoading && videoStories.length === 0 ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FB0500]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FB0500]"></div>
             </div>
           ) : videoStories.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
-              <Video size={48} className="mx-auto mb-4 text-gray-400" />
+            <div className="bg-white rounded-xl shadow-xs border border-gray-200/80 p-8 text-center text-gray-400 text-xs">
+              <Video size={36} className="mx-auto mb-2 text-gray-300" />
               <p>No video stories found.</p>
             </div>
           ) : (
             videoStories.map((v) => (
-              <div key={v._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-3 sm:p-4 flex gap-3">
-                  <div className="flex-shrink-0 w-24 sm:w-32 aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-100">
+              <div key={v._id} className="bg-white rounded-xl shadow-xs border border-gray-200/80 overflow-hidden p-3.5 sm:p-4">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-24 aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200/70">
                     <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">{v.title}</div>
-                    <div className="text-[10px] text-gray-500 mt-1.5 flex flex-wrap gap-2 items-center">
-                      <span className="bg-gray-100 px-1.5 py-0.5 rounded">⏱ {v.duration}</span>
-                      <span className="bg-gray-100 px-1.5 py-0.5 rounded">Order: {v.order}</span>
+                    <div className="text-sm font-semibold text-gray-900 line-clamp-1">{v.title}</div>
+                    <div className="text-[10px] text-gray-400 mt-1 flex flex-wrap gap-2 items-center">
+                      <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">⏱ {v.duration || "N/A"}</span>
+                      <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">Order: {v.order}</span>
                     </div>
-                    <div className="mt-2">
-                      {v.isActive ? <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full border border-green-200">ACTIVE</span> : <span className="text-[10px] font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full border border-gray-300">INACTIVE</span>}
+                    <div className="mt-1.5">
+                      {v.isActive ? (
+                        <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase">ACTIVE</span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase">INACTIVE</span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 justify-start">
+                  <div className="flex flex-col gap-1.5 justify-start">
                     <button onClick={() => {
                       setVIsEditing(true);
                       setSelectedV(v);
                       setVFormData({ title: v.title, youtubeUrl: v.youtubeUrl, duration: v.duration, order: v.order, isActive: v.isActive });
                       setVShowModal(true);
-                    }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={16} /></button>
-                    <button onClick={() => handleVDelete(v._id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                    }} className="p-1.5 rounded-md bg-blue-50 text-[#0078FF] hover:bg-blue-100 border border-blue-200/80 transition cursor-pointer">
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => handleVDelete(v._id)} className="p-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/80 transition cursor-pointer">
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -562,59 +600,95 @@ const ManageSlider = () => {
           )}
         </div>
 
-        {/* Desktop Table View for Video Stories - For screens 768px and above */}
-        <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden mb-20 border border-gray-100">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        {/* Desktop Table View for Video Stories - 100% Fit, Zero Horizontal Scrollbar */}
+        <div className="hidden md:block bg-white rounded-xl shadow-xs border border-gray-200/80 overflow-hidden mb-16 w-full">
+          <table className="w-full table-fixed text-left border-collapse">
+            <thead>
+              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-gray-500">
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider w-[15%]">Video Thumbnail</th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider w-[37%]">Title</th>
+                <th className="px-3 py-3.5 text-xs font-semibold uppercase tracking-wider text-center w-[12%]">Duration</th>
+                <th className="px-3 py-3.5 text-xs font-semibold uppercase tracking-wider text-center w-[10%]">Order</th>
+                <th className="px-3 py-3.5 text-xs font-semibold uppercase tracking-wider text-center w-[12%]">Status</th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-center w-[14%]">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {vLoading && videoStories.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Video Thumbnail</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Title</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Duration</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Order</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest text-center">Actions</th>
+                  <td colSpan="6" className="text-center py-10">
+                    <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-[#FB0500] mx-auto" />
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {vLoading && videoStories.length === 0 ? (
-                  <tr><td colSpan="6" className="text-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FB0500] mx-auto" /></td></tr>
-                ) : videoStories.length === 0 ? (
-                  <tr><td colSpan="6" className="text-center py-20 text-gray-400">No video stories found.</td></tr>
-                ) : (
-                  videoStories.map((v) => (
-                    <tr key={v._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="w-24 aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-100">
-                          <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover" />
+              ) : videoStories.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-12 text-gray-400 text-xs">
+                    No video stories found.
+                  </td>
+                </tr>
+              ) : (
+                videoStories.map((v) => (
+                  <tr key={v._id} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="px-4 py-3.5 align-middle whitespace-nowrap">
+                      <div className="w-20 aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200/70 shadow-xs">
+                        <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 align-middle">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-gray-900 tracking-tight truncate" title={v.title}>
+                          {v.title}
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-bold text-gray-900 line-clamp-1">{v.title}</div>
-                        <div className="text-[10px] text-gray-400 truncate max-w-[150px]">{v.youtubeUrl}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{v.duration}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700">{v.order}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
-                        {v.isActive ? <span className="text-green-600">Active</span> : <span className="text-gray-400">Inactive</span>}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex justify-center gap-2">
-                          <button onClick={() => {
+                        <div className="text-xs text-gray-400 font-normal truncate mt-0.5" title={v.youtubeUrl}>
+                          {v.youtubeUrl}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3.5 align-middle whitespace-nowrap text-xs sm:text-sm text-gray-500 font-normal text-center">
+                      {v.duration || "—"}
+                    </td>
+                    <td className="px-3 py-3.5 align-middle whitespace-nowrap text-xs sm:text-sm font-medium text-gray-700 text-center">
+                      {v.order}
+                    </td>
+                    <td className="px-3 py-3.5 align-middle whitespace-nowrap text-center">
+                      {v.isActive ? (
+                        <span className="inline-block px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md uppercase tracking-wider">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200 rounded-md uppercase tracking-wider">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 align-middle text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+                        <button
+                          onClick={() => {
                             setVIsEditing(true);
                             setSelectedV(v);
                             setVFormData({ title: v.title, youtubeUrl: v.youtubeUrl, duration: v.duration, order: v.order, isActive: v.isActive });
                             setVShowModal(true);
-                          }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={18} /></button>
-                          <button onClick={() => handleVDelete(v._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          }}
+                          className="p-1.5 rounded-md bg-blue-50 text-[#0078FF] hover:bg-blue-100 border border-blue-200/80 transition cursor-pointer"
+                          title="Edit Video Story"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleVDelete(v._id)}
+                          className="p-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/80 transition cursor-pointer"
+                          title="Delete Video Story"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

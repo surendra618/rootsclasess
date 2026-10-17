@@ -65,13 +65,13 @@ const About = () => {
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               to="/course"
-              className="px-6 py-3 rounded-lg bg-[#FB0500] hover:bg-red-700 text-white font-bold text-sm shadow-lg shadow-red-500/20 transition duration-200 inline-flex items-center gap-2"
+              className="px-6 py-3 rounded-md bg-[#FB0500] hover:bg-red-700 text-white font-semibold text-sm transition duration-200 inline-flex items-center gap-2"
             >
               Explore Courses <ArrowRight size={16} />
             </Link>
             <Link
               to="/contact"
-              className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition duration-200"
+              className="px-6 py-3 rounded-md bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition duration-200"
             >
               Contact Us
             </Link>
@@ -81,7 +81,7 @@ const About = () => {
 
       {/* Stats Bar */}
       <section className="max-w-6xl mx-auto -mt-10 px-4 relative z-20">
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200/80 grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100 p-6 sm:p-8">
+        <div className="bg-white rounded-md border border-slate-200/80 grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100 p-6 sm:p-8">
           {stats.map((item, idx) => (
             <div key={idx} className="text-center py-3 md:py-0">
               <div className="text-2xl sm:text-4xl font-extrabold text-[#0078FF]">{item.value}</div>
@@ -125,7 +125,7 @@ const About = () => {
             {values.map((val, idx) => {
               const Icon = val.icon;
               return (
-                <div key={idx} className="p-6 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
+                <div key={idx} className="p-6 rounded-md bg-white border border-slate-200 transition">
                   <div className={`w-12 h-12 rounded-lg flex items-center justify-center border ${val.color} mb-4`}>
                     <Icon size={22} />
                   </div>

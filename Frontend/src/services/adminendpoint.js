@@ -102,8 +102,12 @@ const api ={
         grantTestAccess: Base_Url + "/scholarship/grant-test-access",
         revokeTestAccess: Base_Url + "/scholarship/revoke-test-access",
         getAvailableTests: Base_Url + "/scholarship/available-tests"
+     },
+     policy: {
+        getPolicy: (type) => `${Base_Url}/policy/get/${type}`,
+        updatePolicy: `${Base_Url}/policy/update`,
+        uploadPdf: `${Base_Url}/policy/upload-pdf`,
+        getAll: `${Base_Url}/policy/all`
      }
-
-    
 }
 export default api

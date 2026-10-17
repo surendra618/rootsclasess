@@ -14,6 +14,7 @@ import FacultyManagement from "../pages/Admin/FacultyManagement";
 import Settings from "../pages/Admin/Settings";
 import SchollershipResult from "../pages/Admin/SchollershipResult";
 import Dashboard from "../pages/Admin/Dashboard";
+import ManagePolicies from "../pages/Admin/ManagePolicies";
 
 const Adminroutes = [
   {
@@ -169,6 +170,20 @@ const Adminroutes = [
       {
         path: "faculty",
         element: <FacultyManagement />,
+      },
+
+      // Terms & Privacy Policies Management
+      {
+        path: "policies",
+        element: <ManagePolicies />,
+      },
+      {
+        path: "manage-policies",
+        element: <ManagePolicies />,
+      },
+      {
+        path: "policy",
+        element: <ManagePolicies />,
       },
 
       // Settings

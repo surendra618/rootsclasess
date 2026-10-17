@@ -37,8 +37,7 @@ const AdminLayout = () => {
   const hideSidebar = location.pathname.startsWith("/instructor/courses/");
 
   return (
-    <div className="min-h-screen bg-white flex">
-      
+    <div className="min-h-screen bg-[#F8FAFC]">
       {!hideSidebar && (
         <Sidebar
           isMobileOpen={isMobileOpen}
@@ -47,11 +46,11 @@ const AdminLayout = () => {
       )}
 
       <div
-        className={`transition-all duration-300 w-full ${
-          !hideSidebar ? "lg:ml-64" : ""
+        className={`transition-all duration-300 min-h-screen ${
+          !hideSidebar ? "lg:pl-64" : ""
         }`}
       >
-        <main className="p-0">
+        <main className="p-0 w-full min-w-0">
           <Outlet />
         </main>
       </div>
