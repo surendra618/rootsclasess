@@ -59,6 +59,12 @@ const userSchema = new mongoose.Schema(
                 ref: "Course",
             },
         ],
+        purchasedTests: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Test",
+            },
+        ],
         scholarshipApplied: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Scholarship",
@@ -82,8 +88,15 @@ const userSchema = new mongoose.Schema(
       isEmailVerified: {
         type: Boolean,
         default: false,
+      },
+      googleId: {
+        type: String,
+        default: null,
+      },
+      authProvider: {
+        type: String,
+        default: "local",
       }
-
     },
     { timestamps: true }
 )

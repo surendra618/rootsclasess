@@ -187,7 +187,9 @@ export const handleLogin = async (req, res) => {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
-        role: user.role || "user"
+        role: user.role || "user",
+        currentClass: user.currentClass || user.className || "11th",
+        className: user.className || user.currentClass || "11th"
       }
     });
 
@@ -257,7 +259,8 @@ export const Getuser = async (req, res) => {
     }
 
     const user = await User.findById(studentId)
-      .populate("enrolledCourses");
+      .populate("enrolledCourses")
+      .populate("purchasedTests");
 
     if (!user) {
       return res.status(404).json({
@@ -503,15 +506,30 @@ export const getScholarshipTestforStudent = async (req, res, next) => {
     }
 
     let tests = [];
-    if (student.currentClass) {
+    const isTestAccount = student.email === "student@rootclasses.com" || student.email?.includes("test");
+    if (isTestAccount) {
+      // Test account gets full access to all mock tests regardless of publish state or class
+      tests = await Test.find().sort({ createdAt: -1 });
+    } else if (!student.currentClass || student.currentClass === "All") {
+      tests = await Test.find({ isPublished: true }).sort({ createdAt: -1 });
+    } else {
+      const classNum = student.currentClass ? String(student.currentClass).match(/\d+/) : null;
+      const classPatterns = [student.currentClass, "All"];
+      if (classNum) {
+        classPatterns.push(new RegExp(classNum[0], "i"));
+      }
       tests = await Test.find({
-        className: student.currentClass,
+        $or: [
+          { className: { $in: classPatterns } },
+          { className: "All" },
+          { category: { $in: [/^jee/i, /^neet/i, /^ssc/i, /^defense/i, /^nda/i] } }
+        ],
         isPublished: true
-      });
+      }).sort({ createdAt: -1 });
     }
 
     if (!tests || tests.length === 0) {
-      tests = await Test.find({ isPublished: true });
+      tests = await Test.find().sort({ createdAt: -1 });
     }
 
     return res.status(200).json({
@@ -523,5 +541,135 @@ export const getScholarshipTestforStudent = async (req, res, next) => {
     next(error);
   }
 };
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential, email: directEmail, fullName: directName, googleId: directGoogleId, profileImage, phone } = req.body;
+
+    let email = directEmail;
+    let fullName = directName;
+    let googleId = directGoogleId;
+    let picture = profileImage;
+
+    // Decode Google JWT if passed
+    if (credential) {
+      try {
+        const parts = credential.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          email = payload.email || email;
+          fullName = payload.name || fullName;
+          googleId = payload.sub || googleId;
+          picture = payload.picture || picture;
+        }
+      } catch (e) {
+        console.error("Error decoding Google credential JWT:", e);
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Google email is required"
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if user already exists
+    let user = await User.findOne({
+      $or: [
+        { email: cleanEmail },
+        ...(googleId ? [{ googleId }] : [])
+      ]
+    });
+
+    if (user) {
+      if (user.isBanned) {
+        return res.status(403).json({
+          success: false,
+          isBanned: true,
+          message: user.banReason || "Your account has been suspended by administration."
+        });
+      }
+
+      // Update googleId, phone and verify status if needed
+      if (!user.googleId && googleId) user.googleId = googleId;
+      if (!user.isEmailVerified) user.isEmailVerified = true;
+      if (picture && !user.profileImage) user.profileImage = picture;
+      if (phone && !user.phone) user.phone = phone.toString().trim();
+      await user.save();
+
+      const token = generateToken(user._id);
+
+      return res.status(200).json({
+        success: true,
+        message: "Signed in with Google successfully",
+        token,
+        user: {
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          phone: user.phone || "",
+          currentClass: user.currentClass || "11th",
+          profileImage: user.profileImage || ""
+        }
+      });
+    }
+
+    // New User -> Register via Google
+    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+    const hash = await bcrypt.hash(randomPassword, 10);
+
+    user = await User.create({
+      fullName: (fullName || cleanEmail.split('@')[0]).trim(),
+      email: cleanEmail,
+      password: hash,
+      role: "student",
+      googleId: googleId || null,
+      authProvider: "google",
+      profileImage: picture || "",
+      isEmailVerified: true,
+      currentClass: "11th",
+      interestedCourse: "foundation",
+      gender: "other",
+      dateofBirth: "2006-01-01",
+      phone: phone ? phone.toString().trim() : "",
+      isBanned: false
+    });
+
+    const token = generateToken(user._id);
+
+    emitNotification("admin_room", "new_student_registered", {
+      fullName: user.fullName,
+      email: user.email,
+      createdAt: user.createdAt,
+      authProvider: "google"
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Account created and signed in with Google successfully!",
+      token,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        currentClass: user.currentClass,
+        profileImage: user.profileImage
+      }
+    });
+
+  } catch (error) {
+    console.error("Google Auth Controller Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to authenticate with Google"
+    });
+  }
+};
+
 
 

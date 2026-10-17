@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { EditProfileDetails, getScholarshipTestforStudent, Getuser, handleLogin, handleStdProfile, Registeruser, resetPassword, sendOTPEmail, verifyOTP } from "./student.controller.js";
+import { EditProfileDetails, getScholarshipTestforStudent, Getuser, handleLogin, handleStdProfile, Registeruser, resetPassword, sendOTPEmail, verifyOTP, googleAuth } from "./student.controller.js";
 import { authMiddleware } from "../../middleware/auth.js";
 
 const studentRouter =Router()
@@ -8,6 +8,7 @@ const upload = multer({ dest: "uploads/" });
 
 studentRouter.post("/register",Registeruser)
 studentRouter.post("/login",handleLogin)
+studentRouter.post("/google-auth",googleAuth)
 studentRouter.post("/std-profile-img",upload.single("image"),handleStdProfile)
 studentRouter.post("/edit-profile-details",EditProfileDetails)
 studentRouter.post("/get-student",Getuser)

@@ -56,6 +56,22 @@ const scholarshipSchema = new mongoose.Schema(
     adminRemark: {
       type: String,
     },
+    testAccessGranted: {
+      type: Boolean,
+      default: false,
+    },
+    assignedTest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Test",
+      default: null,
+    },
+    testAccessGrantedAt: {
+      type: Date,
+    },
+    testAccessGrantedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     isUsed: {
       type: Boolean,
       default: false,

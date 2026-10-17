@@ -49,27 +49,27 @@ export const JoinClass = async (req, res, next) => {
   }
 };
 
-export const GetStudentCount = async(req,res,next)=>{
-    try {
-        const classes = await OnlineClass.find()
+export const GetStudentCount = async (req, res, next) => {
+  try {
+    const classes = await OnlineClass.find()
 
-       const classWithCount = await Promise.all(
-        classes.map(async(cls)=>{
-            const count = await Attendance.countDocuments({
-                classId:cls._id,
-            });
-            return {
-                ...cls._doc,
-                studentCount:count
-            }
-        })
-       )
-        res.status(200).json({
-            success:true,
-            data:classWithCount
-        })
-        
-    } catch (error) {
-        next(error)
-    }
+    const classWithCount = await Promise.all(
+      classes.map(async (cls) => {
+        const count = await Attendance.countDocuments({
+          classId: cls._id,
+        });
+        return {
+          ...cls._doc,
+          studentCount: count
+        }
+      })
+    )
+    res.status(200).json({
+      success: true,
+      data: classWithCount
+    })
+
+  } catch (error) {
+    next(error)
+  }
 }

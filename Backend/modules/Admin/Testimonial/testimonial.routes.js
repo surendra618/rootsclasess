@@ -7,7 +7,8 @@ const Upload = multer({ dest: "uploads/" });
 testimonialRouter.post("/add_testimonial",Upload.single("image"),AddTestimonial)
 testimonialRouter.post("/get_testimonial",GetTestimonial)
 testimonialRouter.post("/update_testimonial",Upload.single("image"),UpdateTestimonial)
-testimonialRouter.post("/delete_testinomial",DeleteTestinomial)
+testimonialRouter.post("/delete_testimonial", DeleteTestinomial)
+testimonialRouter.post("/delete_testinomial", DeleteTestinomial)
 
 
 export default testimonialRouter

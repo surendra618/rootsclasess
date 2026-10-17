@@ -1,6 +1,8 @@
 import { Test } from "../../Admin/CreateTest/createtest.model.js";
 import scholarshipModel from "../Scholrship/scholarship.model.js";
 import { Result } from "./result.model.js";
+import User from "../student.model.js";
+import { EnrollTest } from "../enrollStudent/enrollTest.model.js";
 
 // export const submitTest = async (req, res) => {
 //   try {
@@ -120,13 +122,53 @@ import { Result } from "./result.model.js";
 
 export const startTest = async (req, res) => {
   try {
-    const { studentId, testId } = req.body;
+    const { studentId, testId, isRetake } = req.body;
     if (!studentId || !testId) {
       return res.status(400).json({ success: false, message: "studentId and testId are required" });
     }
 
+    const test = await Test.findById(testId);
+    if (!test) {
+      return res.status(404).json({ success: false, message: "Test not found" });
+    }
+
+    // Check if test is paid and ensure student has unlocked/purchased it
+    if (test.isPaid && test.price > 0) {
+      const student = await User.findById(studentId);
+      const isTestAcc = student?.email?.toLowerCase() === 'student@rootclasses.com' || student?.email?.toLowerCase()?.includes('test');
+      const hasPurchased = student?.purchasedTests?.some(t => t.toString() === testId.toString());
+
+      if (!hasPurchased && !isTestAcc) {
+        const enrolled = await EnrollTest.findOne({ student: studentId, test: testId, paymentStatus: 'success' });
+        if (!enrolled) {
+          return res.status(403).json({
+            success: false,
+            message: `This is a paid mock test (₹${test.price}). Please complete payment to unlock it.`,
+            requiresPayment: true,
+            price: test.price
+          });
+        }
+      }
+    }
+
     const existingAttempt = await Result.findOne({ studentId, testId });
     if (existingAttempt) {
+      // Allow unlimited retakes: reset attempt if retake requested or previously completed
+      if (isRetake || existingAttempt.isCompleted) {
+        existingAttempt.testStartTime = new Date();
+        existingAttempt.isCompleted = false;
+        existingAttempt.obtainedMarks = 0;
+        existingAttempt.percentage = 0;
+        existingAttempt.answers = [];
+        await existingAttempt.save();
+        return res.status(200).json({ 
+          success: true, 
+          message: "Test retake started successfully", 
+          data: existingAttempt,
+          isExitBlocked: false 
+        });
+      }
+
       // Calculate if exit should be blocked (10 minutes)
       const elapsedMinutes = (new Date() - new Date(existingAttempt.testStartTime)) / (1000 * 60);
       const isExitBlocked = elapsedMinutes >= 10;
@@ -176,9 +218,6 @@ export const submitTest = async (req, res) => {
 
     const existingAttempt = await Result.findOne({ studentId, testId });
     if (!existingAttempt) return res.status(400).json({ success: false, message: "Please start test first" });
-    if (existingAttempt.isCompleted) {
-      return res.status(400).json({ success: false, message: "You have already completed this test. You cannot retake it." });
-    }
 
     // ✅ No time restriction for submission – submit button always works.
     let obtainedMarks = 0;

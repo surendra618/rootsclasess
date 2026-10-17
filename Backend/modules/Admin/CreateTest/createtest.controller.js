@@ -4,13 +4,19 @@ import { emitNotification } from "../../../config/socket.js";
 
 export const createTest = async (req, res) => {
   try {
-    const { title, duration, passingPercentage, className } = req.body;
+    const { title, duration, passingPercentage, className, category, year, difficulty, description, isPaid, price } = req.body;
 
     const test = await Test.create({
       title,
-      duration,
-       className,
-      passingPercentage
+      duration: duration || 60,
+      className: className || '11th',
+      passingPercentage: passingPercentage || 70,
+      category: category || 'General',
+      year: year ? String(year) : new Date().getFullYear().toString(),
+      difficulty: difficulty || 'Medium',
+      description: description || 'Test your knowledge with this comprehensive mock test.',
+      isPaid: Boolean(isPaid),
+      price: price ? Number(price) : 0
     });
 
     res.json({
@@ -27,7 +33,7 @@ export const createTest = async (req, res) => {
 
 export const updateTest = async (req, res) => {
   try {
-    const { testId, title, duration, passingPercentage, isPublished,className } = req.body;
+    const { testId, title, duration, passingPercentage, isPublished, className, category, year, difficulty, description, isPaid, price } = req.body;
 
     const test = await Test.findById(testId);
 
@@ -38,7 +44,13 @@ export const updateTest = async (req, res) => {
     if (title !== undefined) test.title = title;
     if (duration !== undefined) test.duration = duration;
     if (passingPercentage !== undefined) test.passingPercentage = passingPercentage;
-    if(className !== undefined) test.className = className;
+    if (className !== undefined) test.className = className;
+    if (category !== undefined) test.category = category;
+    if (year !== undefined) test.year = String(year);
+    if (difficulty !== undefined) test.difficulty = difficulty;
+    if (description !== undefined) test.description = description;
+    if (isPaid !== undefined) test.isPaid = Boolean(isPaid);
+    if (price !== undefined) test.price = Number(price);
     if (isPublished !== undefined) {
       test.isPublished = isPublished;
     }
@@ -84,28 +96,64 @@ export const DeleteTest = async(req,res,next)=>{
 
 export const addQuestion = async (req, res) => {
   try {
-    const { testId,question, options, correctAnswer, marks } = req.body;
+    const { testId, question, options, correctAnswer, marks, questions, subject } = req.body;
+
+    if (!testId) {
+      return res.status(400).json({ success: false, message: "testId is required" });
+    }
 
     const test = await Test.findById(testId);
 
     if (!test) {
-      return res.status(404).json({ message: "Test not found" });
+      return res.status(404).json({ success: false, message: "Test not found" });
     }
 
+    // Support bulk questions array upload
+    if (Array.isArray(questions) && questions.length > 0) {
+      let addedCount = 0;
+      for (const q of questions) {
+        const qText = q.question || q.questionText || q.text || "";
+        const qOptions = Array.isArray(q.options) ? q.options : [];
+        const qAns = q.correctAnswer !== undefined ? q.correctAnswer : (q.answer !== undefined ? q.answer : "");
+
+        if (qText && qOptions.length > 0) {
+          const qMarks = Number(q.marks) || 1;
+          test.questions.push({
+            question: qText,
+            options: qOptions,
+            correctAnswer: qAns,
+            marks: qMarks,
+            subject: (q.subject || subject || "").trim()
+          });
+          test.totalMarks = (test.totalMarks || 0) + qMarks;
+          addedCount++;
+        }
+      }
+      await test.save();
+      return res.json({
+        success: true,
+        message: `${addedCount} questions added successfully`,
+        data: test
+      });
+    }
+
+    // Single question add
+    const qMarks = Number(marks) || 1;
     test.questions.push({
       question,
       options,
       correctAnswer,
-      marks
+      marks: qMarks,
+      subject: subject || ""
     });
 
-    test.totalMarks += marks || 1;
+    test.totalMarks = (test.totalMarks || 0) + qMarks;
 
     await test.save();
 
     res.json({
       success: true,
-      message: "Question added",
+      message: "Question added successfully",
       data: test
     });
 
@@ -115,8 +163,15 @@ export const addQuestion = async (req, res) => {
 };
 export const getQuestionsByTest = async (req, res) => {
   try {
-
-    const test = await Test.find().select("title duration className questions");
+    const { testId } = req.body || {};
+    let test;
+    if (testId) {
+      test = await Test.findById(testId);
+    } else {
+      test = await Test.find()
+        .select("title duration className questions category difficulty description year isPublished passingPercentage totalMarks isPaid price")
+        .sort({ createdAt: -1 });
+    }
 
     if (!test) {
       return res.status(404).json({ message: "Test not found" });
@@ -134,7 +189,7 @@ export const getQuestionsByTest = async (req, res) => {
 
 export const updateQuestion = async (req, res) => {
   try {
-    const { testId, questionId,question, options, correctAnswer, marks } = req.body;
+    const { testId, questionId, question, options, correctAnswer, marks, subject } = req.body;
 
     const test = await Test.findById(testId);
 
@@ -150,7 +205,8 @@ export const updateQuestion = async (req, res) => {
 
     if (question) ques.question = question;
     if (options) ques.options = options;
-    if (correctAnswer) ques.correctAnswer = correctAnswer;
+    if (correctAnswer !== undefined) ques.correctAnswer = correctAnswer;
+    if (subject !== undefined) ques.subject = subject;
 
     if (marks !== undefined) {
       test.totalMarks = test.totalMarks - ques.marks + marks;
@@ -234,8 +290,25 @@ export const publishTest = async (req, res) => {
 
 export const getPublishedTests = async (req, res) => {
   try {
-    const tests = await Test.find({ isPublished: true })
-      .select("title duration totalMarks questions className description difficulty category createdAt")
+    const category = req.query?.category || req.body?.category;
+    const year = req.query?.year || req.body?.year;
+    const className = req.query?.className || req.body?.className;
+
+    const queryFilter = { isPublished: true };
+
+    if (category && category.toLowerCase() !== 'all') {
+      const safeCategory = String(category).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      queryFilter.category = new RegExp(`^${safeCategory}$`, 'i');
+    }
+    if (year && year.toLowerCase() !== 'all') {
+      queryFilter.year = String(year);
+    }
+    if (className) {
+      queryFilter.className = className;
+    }
+
+    const tests = await Test.find(queryFilter)
+      .select("title duration totalMarks questions className description difficulty category year isPaid price createdAt")
       .sort({ createdAt: -1 });
 
     const formattedTests = tests.map(test => ({
@@ -249,6 +322,9 @@ export const getPublishedTests = async (req, res) => {
       description: test.description,
       difficulty: test.difficulty || 'Medium',
       category: test.category || 'General',
+      year: test.year || (test.createdAt ? new Date(test.createdAt).getFullYear().toString() : new Date().getFullYear().toString()),
+      isPaid: Boolean(test.isPaid),
+      price: Number(test.price) || 0,
       createdAt: test.createdAt
     }));
 
@@ -278,7 +354,8 @@ export const getTestQuestionsForStudent = async (req, res) => {
       _id: q._id,
       question: q.question,
       options: q.options,
-      marks: q.marks
+      marks: q.marks,
+      subject: q.subject || ""
     }));
 
     res.json({

@@ -26,6 +26,7 @@ import successStoryRouter from "./modules/Admin/SuccessStory/successStory.routes
 import callbackRouter from "./modules/Admin/Callback/callback.routes.js";
 import facultyRouter from "./modules/Admin/Faculty/faculty.routes.js";
 import progressRouter from "./modules/Student/progress/progress.routes.js";
+import policyRouter from "./modules/Admin/Policy/policy.routes.js";
 
 dotenv.config();
 const app = express();
@@ -38,28 +39,46 @@ connectdb();
 app.use(cors({
   origin: "*",
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use("/receipts", express.static(path.join(process.cwd(), "receipts")));
 
 app.use("/student", studentRouter);
 app.use("/admin", adminRouter);
-app.use("/instructor", instructorRouter)
-app.use("/onlineClass", classRouter)
-app.use("/joinclass", attendanceRouter)
-app.use("/blog", blogRouter)
-app.use("/slider", sliderRouter)
-app.use("/testimonial", testimonialRouter)
-app.use("/category", categoryRouter)
-app.use("/course", createcourseRouter)
-app.use("/enroll", enrollmentRouter)
-app.use("/test", testRouter)
-app.use("/result", resultRouter)
-app.use("/payment", paymentRouter)
-app.use("/scholarship", scholarshipRouter)
+app.use("/instructor", instructorRouter);
+app.use("/onlineClass", classRouter);
+app.use("/online-class", classRouter);
+app.use("/onlineclass", classRouter);
+app.use("/joinclass", attendanceRouter);
+app.use("/join-class", attendanceRouter);
+app.use("/blog", blogRouter);
+app.use("/blogs", blogRouter);
+app.use("/slider", sliderRouter);
+app.use("/sliders", sliderRouter);
+app.use("/testimonial", testimonialRouter);
+app.use("/testimonials", testimonialRouter);
+app.use("/category", categoryRouter);
+app.use("/categories", categoryRouter);
+app.use("/course", createcourseRouter);
+app.use("/courses", createcourseRouter);
+app.use("/enroll", enrollmentRouter);
+app.use("/enrollment", enrollmentRouter);
+app.use("/enrollments", enrollmentRouter);
+app.use("/test", testRouter);
+app.use("/tests", testRouter);
+app.use("/result", resultRouter);
+app.use("/results", resultRouter);
+app.use("/payment", paymentRouter);
+app.use("/payments", paymentRouter);
+app.use("/scholarship", scholarshipRouter);
+app.use("/scholarships", scholarshipRouter);
 app.use("/success-story", successStoryRouter);
+app.use("/success-stories", successStoryRouter);
 app.use("/callback", callbackRouter);
 app.use("/faculty", facultyRouter);
-app.use("/progress", progressRouter)
+app.use("/progress", progressRouter);
+app.use("/policy", policyRouter);
+app.use("/policies", policyRouter);
 
 
 
