@@ -53,7 +53,7 @@ const ErrorPage = () => {
           >
             <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Go Back
           </button>
-          {/* knkdf  m,fvjrv c json */}
+
           <Link
             to="/"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-200/80 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"

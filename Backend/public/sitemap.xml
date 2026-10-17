@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Home Page -->
+  <url>
+    <loc>https://rootsclasses.in/</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://rootsclasses.in/logo.svg</image:loc>
+      <image:title>Roots Classes - Best JEE &amp; NEET Coaching Institute in Ludhiana</image:title>
+      <image:caption>Premier coaching institute in Ludhiana for IIT JEE, NEET, Foundation &amp; Board Exams</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Courses List Page -->
+  <url>
+    <loc>https://rootsclasses.in/course</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Scholarship Page -->
+  <url>
+    <loc>https://rootsclasses.in/scholarship</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Online Test Series Page -->
+  <url>
+    <loc>https://rootsclasses.in/test</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blog & Education Guides -->
+  <url>
+    <loc>https://rootsclasses.in/blog</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- About Us -->
+  <url>
+    <loc>https://rootsclasses.in/about</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contact Us / Ludhiana Center -->
+  <url>
+    <loc>https://rootsclasses.in/contact</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Legal / Terms & Conditions -->
+  <url>
+    <loc>https://rootsclasses.in/termsandconditions</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Legal / Privacy Policy -->
+  <url>
+    <loc>https://rootsclasses.in/privacypolicy</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

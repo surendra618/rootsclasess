@@ -6,7 +6,6 @@ import { FaFacebook, FaInstagram, FaLinkedin, FaYoutube } from 'react-icons/fa';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
-  // Programs & Exam Categories requested by user (JEE, NEET, SSC, Classes)
   const programLinks = [
     { name: "IIT-JEE (Main & Adv.)", href: "/course" },
     { name: "NEET-UG (Medical)", href: "/course" },
@@ -58,7 +57,7 @@ const Footer = () => {
     <footer className="bg-[#0b0f19] text-gray-400 border-t border-gray-800/80 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-10">
-          
+
           {/* 1. Brand Section */}
           <div className="text-center sm:text-left">
             <Link to="/" className="inline-flex items-center gap-2.5 mb-4">
