@@ -56,7 +56,7 @@ const ErrorPage = () => {
 
           <Link
             to="/"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-200/80 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-200/80 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
           >
             <Home size={16} className="text-gray-500" /> Return Home
           </Link>
