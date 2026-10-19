@@ -466,16 +466,62 @@ export const GetMyCourse = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "studentId is required" });
     }
 
-    const enrollment = await EnrollStudent.find({
+    // 1. Fetch enrollments with populated course, category and instructor
+    const enrollments = await EnrollStudent.find({
       student: studentId,
-      paymentStatus: "success"
-    }).populate("course");
+      $or: [
+        { paymentStatus: "success" },
+        { status: "success" }
+      ]
+    }).populate({
+      path: "course",
+      populate: [
+        { path: "category" },
+        { path: "instructor", select: "fullName email phone role profileImage" }
+      ]
+    });
+
+    // 2. Fetch User to get enrolledCourses
+    const user = await User.findById(studentId).populate({
+      path: "enrolledCourses",
+      populate: [
+        { path: "category" },
+        { path: "instructor", select: "fullName email phone role profileImage" }
+      ]
+    });
+
+    const enrolledCourseIds = new Set(
+      enrollments
+        .map(e => e.course?._id?.toString() || e.course?.toString())
+        .filter(Boolean)
+    );
+
+    const allData = [...enrollments];
+
+    if (user?.enrolledCourses && Array.isArray(user.enrolledCourses)) {
+      for (const courseDoc of user.enrolledCourses) {
+        if (courseDoc && courseDoc._id && !enrolledCourseIds.has(courseDoc._id.toString())) {
+          enrolledCourseIds.add(courseDoc._id.toString());
+          allData.push({
+            _id: `enroll_${courseDoc._id}_${studentId}`,
+            student: studentId,
+            course: courseDoc,
+            status: "success",
+            paymentStatus: "success",
+            orderId: "FREE_ENROLLMENT",
+            amount: courseDoc.price || 0,
+            enrolledAt: user.updatedAt || new Date(),
+            createdAt: user.updatedAt || new Date()
+          });
+        }
+      }
+    }
 
     return res.status(200).json({
       message: "get all my purches",
       error: false,
       success: true,
-      data: enrollment,
+      data: allData,
     });
   } catch (error) {
     next(error);

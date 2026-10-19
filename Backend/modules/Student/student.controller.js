@@ -5,6 +5,8 @@ import User from './student.model.js';
 import { sendOTP } from '../../config/emailServices.js';
 import { emitNotification } from '../../config/socket.js';
 import { Test } from '../Admin/CreateTest/createtest.model.js';
+import { Course } from '../instructor/createCourse/createCourse.model.js';
+import { EnrollStudent } from './enrollStudent/enrollStudent.model.js';
 import { validateEmail } from '../../utils/emailValidator.js';
 
 // In-memory store for verified registration emails (valid for 15 minutes)
@@ -259,7 +261,13 @@ export const Getuser = async (req, res) => {
     }
 
     const user = await User.findById(studentId)
-      .populate("enrolledCourses")
+      .populate({
+        path: "enrolledCourses",
+        populate: [
+          { path: "category" },
+          { path: "instructor", select: "fullName email phone role profileImage" }
+        ]
+      })
       .populate("purchasedTests");
 
     if (!user) {
@@ -269,10 +277,43 @@ export const Getuser = async (req, res) => {
       });
     }
 
+    // Also fetch courses from EnrollStudent to ensure zero enrollment records are missed
+    const enrollments = await EnrollStudent.find({
+      student: studentId,
+      $or: [
+        { paymentStatus: "success" },
+        { status: "success" }
+      ]
+    }).populate({
+      path: "course",
+      populate: [
+        { path: "category" },
+        { path: "instructor", select: "fullName email phone role profileImage" }
+      ]
+    });
+
+    const enrolledCourseIds = new Set(
+      (user.enrolledCourses || [])
+        .map(c => c?._id?.toString() || c?.toString())
+        .filter(Boolean)
+    );
+
+    const mergedCourses = [...(user.enrolledCourses || [])];
+
+    for (const e of enrollments) {
+      if (e.course && e.course._id && !enrolledCourseIds.has(e.course._id.toString())) {
+        enrolledCourseIds.add(e.course._id.toString());
+        mergedCourses.push(e.course);
+      }
+    }
+
+    const userObj = user.toObject ? user.toObject() : { ...user };
+    userObj.enrolledCourses = mergedCourses;
+
     return res.status(200).json({
       message: "user fetched successfully",
       success: true,
-      user,
+      user: userObj,
     });
 
   } catch (error) {

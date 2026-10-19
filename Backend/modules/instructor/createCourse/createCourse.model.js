@@ -8,6 +8,7 @@ const topicSchema = new mongoose.Schema({
   },
 
   description: String,
+  notes: String,
 
   videoType: {
     type: String,

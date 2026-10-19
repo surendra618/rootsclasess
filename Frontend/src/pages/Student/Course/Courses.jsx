@@ -80,7 +80,7 @@ const ClassroomCourses = () => {
     return matchCat && matchSrc;
   });
 
-  const handleView = (course) => navigate('/coursedetails', { state: { course } });
+  const handleView = (course) => navigate(`/coursedetails/${course._id}`, { state: { course } });
 
   /* ── loading ── */
   if (loading) return (

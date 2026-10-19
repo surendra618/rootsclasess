@@ -14,44 +14,30 @@ export const enrollCourse = async (req, res) => {
       });
     }
 
-    // ✅ check already enrolled
-    const existingEnrollment = await EnrollStudent.findOne({
+    let enrollment = await EnrollStudent.findOne({
       student: studentId,
-      course: courseId,
-      status: 'success'
+      course: courseId
     });
 
-    if (existingEnrollment) {
-      return res.status(400).json({
-        success: false,
-        message: "Already enrolled in this course"
+    if (enrollment) {
+      if (status === 'success') {
+        enrollment.status = 'success';
+        enrollment.paymentStatus = 'success';
+        if (!enrollment.enrolledAt) enrollment.enrolledAt = new Date();
+        await enrollment.save();
+      }
+    } else {
+      enrollment = new EnrollStudent({
+        student: studentId,
+        course: courseId,
+        status,
+        paymentStatus: status === 'success' ? 'success' : 'pending',
+        orderId: `FREE_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        amount: 0,
+        enrolledAt: status === 'success' ? new Date() : null
       });
+      await enrollment.save();
     }
-
-    // ✅ check pending
-    const pendingEnrollment = await EnrollStudent.findOne({
-      student: studentId,
-      course: courseId,
-      status: 'pending'
-    });
-
-    if (pendingEnrollment && status === 'pending') {
-      return res.json({
-        success: true,
-        data: pendingEnrollment,
-        message: "Existing pending enrollment found"
-      });
-    }
-
-    // ✅ FIXED: correct fields
-    const enrollment = new EnrollStudent({
-      student: studentId,
-      course: courseId,
-      status,
-      enrolledAt: status === 'success' ? new Date() : null
-    });
-
-    await enrollment.save();
 
     // ✅ update user
     if (status === 'success') {

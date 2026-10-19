@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import api from '../../services/endpoints';
 import useStudentStore from '../../Store/studentstore';
 import { useCourseStore } from '../../Store/courseStore';
@@ -97,10 +97,17 @@ const getDummyImage = (courseTitle) => {
     return 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=400&h=240&fit=crop';
 };
 
-const PurchasedCourse = ({ isEmbedded = false }) => {
+const PurchasedCourse = ({ isEmbedded = false, initialCourseId = null }) => {
     const { student, setStudent } = useStudentStore();
     const navigate = useNavigate();
-    const studentId = student?.id || student?._id;
+    const location = useLocation();
+    const { courseId, id } = useParams();
+    const studentId = student?.id || student?._id || (() => {
+        try {
+            const s = JSON.parse(localStorage.getItem('student') || localStorage.getItem('user'));
+            return s?._id || s?.id;
+        } catch { return null; }
+    })();
 
     const [courses, setCourses] = useState([]);
     const [selectedCourse, setSelectedCourse] = useState(null);
@@ -376,6 +383,18 @@ const PurchasedCourse = ({ isEmbedded = false }) => {
                     }));
                     setCourses(coursesWithModules);
                     await fetchAllCoursesProgress(coursesWithModules);
+
+                    const targetCourseId = initialCourseId || courseId || id || location.state?.courseId || location.state?.course?._id;
+                    if (targetCourseId) {
+                        const targetStr = targetCourseId.toString();
+                        const matched = coursesWithModules.find(c => {
+                            const cId = c.course?._id || c._id;
+                            return cId && cId.toString() === targetStr;
+                        });
+                        if (matched) {
+                            handleCourseSelect(matched);
+                        }
+                    }
                 } else {
                     setCourses([]);
                 }
@@ -629,9 +648,37 @@ const PurchasedCourse = ({ isEmbedded = false }) => {
             }
         };
         setSelectedCourse(c);
-        setSelectedTopic(null);
-        if (c.course.modules?.length > 0) setExpandedModuleId(c.course.modules[0]._id || c.course.modules[0].id || null);
+
+        let firstTopic = null;
+        if (c.course.modules?.length > 0) {
+            setExpandedModuleId(c.course.modules[0]._id || c.course.modules[0].id || null);
+            for (const m of c.course.modules) {
+                if (m.chapters?.length > 0) {
+                    for (const ch of m.chapters) {
+                        if (ch.topics?.length > 0) {
+                            firstTopic = ch.topics[0];
+                            break;
+                        }
+                    }
+                }
+                if (firstTopic) break;
+            }
+        }
+        setSelectedTopic(firstTopic);
     };
+
+    useEffect(() => {
+        if (initialCourseId && courses.length > 0) {
+            const targetStr = initialCourseId.toString();
+            const matched = courses.find(c => {
+                const cId = c.course?._id || c._id;
+                return cId && cId.toString() === targetStr;
+            });
+            if (matched) {
+                handleCourseSelect(matched);
+            }
+        }
+    }, [initialCourseId, courses]);
 
     const handleTopicClick = (topic) => {
         setSelectedTopic(topic);

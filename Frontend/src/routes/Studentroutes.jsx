@@ -63,12 +63,32 @@ const StudentRoutes = [
                 element: <Courses />,
             },
             {
+                path: "/course/:courseId",
+                element: <CourseDetails />
+            },
+            {
+                path: "/courses/:courseId",
+                element: <CourseDetails />
+            },
+            {
                 path: "/coursedetails",
+                element: <CourseDetails />
+            },
+            {
+                path: "/coursedetails/:courseId",
                 element: <CourseDetails />
             },
             {
                 path: "/course-details",
                 element: <CourseDetails />
+            },
+            {
+                path: "/course-details/:courseId",
+                element: <CourseDetails />
+            },
+            {
+                path: "/course-content/:courseId",
+                element: <PurchesCourses />
             },
             {
                 path: "/topicinfo/:topicId",
@@ -85,7 +105,15 @@ const StudentRoutes = [
                 element: <PurchesCourses />
             },
             {
+                path: "/purchescourse/:courseId",
+                element: <PurchesCourses />
+            },
+            {
                 path: "/purchased-courses",
+                element: <PurchesCourses />
+            },
+            {
+                path: "/purchased-courses/:courseId",
                 element: <PurchesCourses />
             },
             {
@@ -94,6 +122,10 @@ const StudentRoutes = [
             },
             {
                 path: "/my-courses",
+                element: <PurchesCourses />
+            },
+            {
+                path: "/my-courses/:courseId",
                 element: <PurchesCourses />
             },
 

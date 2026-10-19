@@ -36,9 +36,10 @@ studentRouter.get("/test-email", async (req, res) => {
   }
 });
 
+import { enrollCourse } from "./enrollStudent/enrollStudent.controller.js";
+
 studentRouter.post("/reset-password",resetPassword)
 studentRouter.post("/get-testfor-student",authMiddleware,getScholarshipTestforStudent)
-
-
+studentRouter.post("/enroll-course", enrollCourse)
 
 export default studentRouter

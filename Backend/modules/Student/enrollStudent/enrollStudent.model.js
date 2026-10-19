@@ -16,7 +16,7 @@ const EnrollStudentSchema = new mongoose.Schema(
 
     orderId: {
       type: String,
-      required: true, 
+      default: () => "ORDER_" + Date.now(),
     },
 
     paymentId: {
@@ -45,7 +45,7 @@ const EnrollStudentSchema = new mongoose.Schema(
 
     amount: {
       type: Number,
-      required: true,
+      default: 0,
     },
 
     originalPrice: {

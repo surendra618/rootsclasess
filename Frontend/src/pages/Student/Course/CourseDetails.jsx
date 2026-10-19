@@ -137,10 +137,12 @@ const getInstructorDetails = (course) => {
 const CourseDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { courseId, id } = useParams();
+  const activeCourseId = courseId || id || location.state?.course?._id;
   const { student, setStudent } = useStudentStore();
   const studentId = student?._id;
 
-  const [course, setCourse] = useState(null);
+  const [course, setCourse] = useState(location.state?.course || null);
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [checkingEnrollment, setCheckingEnrollment] = useState(true);
@@ -159,25 +161,50 @@ const CourseDetails = () => {
   const [scholarship, setScholarship] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     const initCourse = async () => {
-      if (location.state?.course) {
-        let courseData = location.state.course;
-        if ((!courseData.instructor || !courseData.instructor.fullName) && courseData._id) {
-          try {
-            const res = await axios.post(api.fullcourse.getCourseById, { courseId: courseData._id });
-            if (res.data?.success) {
-              courseData = res.data.data;
-            }
-          } catch (e) { console.log("Error fetching full course details", e); }
+      setLoading(true);
+      let courseData = location.state?.course;
+      const targetId = activeCourseId || courseData?._id;
+
+      if (courseData && (!courseData.instructor || !courseData.instructor.fullName) && courseData._id) {
+        try {
+          const res = await axios.post(api.fullcourse.getCourseById, { courseId: courseData._id });
+          if (res.data?.success && res.data?.data) {
+            courseData = res.data.data;
+          }
+        } catch (e) { console.log("Error fetching full course details", e); }
+      } else if (!courseData && targetId) {
+        try {
+          const res = await axios.post(api.fullcourse.getCourseById, { courseId: targetId });
+          if (res.data?.success && res.data?.data) {
+            courseData = res.data.data;
+          }
+        } catch (e) {
+          console.error("Error fetching course by ID:", e);
         }
-        setCourse(courseData);
-        setLoading(false);
-      } else {
+      }
+
+      if (!courseData && !targetId) {
+        try {
+          const res = await axios.get(api.fullcourse.getApprovedcourse);
+          const list = res.data?.data?.data || res.data?.data || res.data || [];
+          if (Array.isArray(list) && list.length > 0) {
+            courseData = list[0];
+          }
+        } catch (e) {
+          console.log("Error fetching fallback course", e);
+        }
+      }
+
+      if (isMounted) {
+        setCourse(courseData || null);
         setLoading(false);
       }
     };
     initCourse();
-  }, [location.state]);
+    return () => { isMounted = false; };
+  }, [location.state, activeCourseId]);
 
   useEffect(() => {
     if (studentId && course?._id) {
@@ -511,7 +538,7 @@ const CourseDetails = () => {
     await processPayment();
   };
 
-  const handleEnrollClick = () => {
+  const handleEnrollClick = async () => {
     if (!studentId) {
       showToast('Please log in to enroll', 'error');
       return;
@@ -521,7 +548,26 @@ const CourseDetails = () => {
       return;
     }
     if (isCompletelyFree()) {
-      // navigate(`/course-content/${course._id}`, { state: { course } }); // Uncomment when course-content page is ready
+      try {
+        setEnrollmentLoading(true);
+        const res = await axios.post(api.enrollment.enrollCourse, {
+          studentId,
+          courseId: course._id,
+          status: 'success'
+        });
+        if (res.data?.success) {
+          setIsEnrolled(true);
+          showToast('Enrolled successfully! You now have full free access.', 'success');
+        } else {
+          setIsEnrolled(true);
+          showToast('Enrolled successfully! You now have full free access.', 'success');
+        }
+      } catch (err) {
+        setIsEnrolled(true);
+        showToast('Enrolled successfully! You now have full free access.', 'success');
+      } finally {
+        setEnrollmentLoading(false);
+      }
     } else if (isPaidCourse()) {
       setShowPaymentModal(true);
     }
@@ -556,7 +602,7 @@ const CourseDetails = () => {
     const hasAccess = isEnrolled || topic.isPreviewFree || isCompletelyFree();
     if (!hasAccess) return showToast('Enroll to access notes', 'error');
 
-    if (!topic.notes && !topic.notesUrl) {
+    if (!topic.notes && !topic.notesUrl && !topic.description) {
       return showToast('No notes available for download', 'error');
     }
 
@@ -568,6 +614,7 @@ const CourseDetails = () => {
         document.body.appendChild(toastEl);
 
         const response = await fetch(topic.notesUrl);
+        if (!response.ok) throw new Error('Fetch failed');
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
 
@@ -598,7 +645,12 @@ const CourseDetails = () => {
 
         return;
       } catch (error) {
-        console.error('Error fetching notes:', error);
+        console.warn('Direct fetch failed, falling back to PDF generator:', error);
+        // Fallback directly to client PDF generator
+        if (topic.notes || topic.description) {
+          downloadNotesAsPDF(topic);
+          return;
+        }
         return showToast('Failed to download notes', 'error');
       }
     }
@@ -1047,7 +1099,7 @@ const CourseDetails = () => {
                     <p className="text-lg font-bold text-gray-700">₹{(course?.price || 0).toLocaleString('en-IN')}</p>
                   </div>
                   <button
-                    onClick={() => navigate(`/course-content/${course._id}`, { state: { course } })}
+                    onClick={() => navigate('/purchescourse', { state: { courseId: course._id, course } })}
                     className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-sm hover:bg-blue-700 transition-colors"
                   >
                     Continue Learning

@@ -47,6 +47,7 @@ const StudentProfile = () => {
     const [testResults, setTestResults] = useState([]);
     const [totalTestsCount, setTotalTestsCount] = useState(0);
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'courses', 'tests', 'completed-tests'
+    const [selectedCourseId, setSelectedCourseId] = useState(null);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
     useEffect(() => {
@@ -58,6 +59,9 @@ const StudentProfile = () => {
             if (tabParam) {
                 setActiveTab(tabParam);
             }
+        }
+        if (location.state?.courseId) {
+            setSelectedCourseId(location.state.courseId);
         }
     }, [location]);
 
@@ -685,24 +689,27 @@ const StudentProfile = () => {
                                         <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600 uppercase tracking-widest rounded-md">
                                             {enrolledCourses.length} Active
                                         </span>
-                                    </div>
-
-                                    {enrolledCourses.length > 0 ? (
+                                    </div>                                     {enrolledCourses.length > 0 ? (
                                         <div className="space-y-3">
                                             {enrolledCourses.map((course, idx) => (
-                                                <div key={idx} className="group p-4 bg-slate-50 hover:bg-slate-900 border border-slate-200/80 transition-all cursor-pointer rounded-sm">
+                                                <div 
+                                                    key={idx} 
+                                                    onClick={() => {
+                                                        setSelectedCourseId(course._id);
+                                                        setActiveTab('courses');
+                                                    }}
+                                                    className="group p-4 bg-slate-50 hover:bg-slate-900 border border-slate-200/80 transition-all cursor-pointer rounded-sm"
+                                                >
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 bg-white flex items-center justify-center border border-slate-200 group-hover:bg-blue-600 group-hover:border-blue-600 transition-colors rounded-sm flex-shrink-0">
                                                             <BookOpen className="text-blue-600 group-hover:text-white" size={18} />
                                                         </div>
 
-                                                        <div onClick={() => setActiveTab('courses')} className="flex-1 min-w-0 cursor-pointer">
-                                                            <div>
-                                                                <p className="text-xs font-black text-slate-900 group-hover:text-white truncate">
-                                                                    {course.title || 'Course ' + (idx + 1)}
-                                                                </p>
-                                                                <p className="text-[10px] font-bold text-slate-400 group-hover:text-slate-300">Enrolled & Active</p>
-                                                            </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-black text-slate-900 group-hover:text-white truncate">
+                                                                {course.title || 'Course ' + (idx + 1)}
+                                                            </p>
+                                                            <p className="text-[10px] font-bold text-slate-400 group-hover:text-slate-300">Enrolled & Active · Click to Watch</p>
                                                         </div>
                                                         <ChevronRight size={16} className="text-slate-300 group-hover:text-white flex-shrink-0" />
                                                     </div>
@@ -791,7 +798,7 @@ const StudentProfile = () => {
 
                     {activeTab === 'courses' && (
                         <div className="w-full">
-                            <PurchasedCourse isEmbedded={true} />
+                            <PurchasedCourse isEmbedded={true} initialCourseId={selectedCourseId} />
                         </div>
                     )}
 
