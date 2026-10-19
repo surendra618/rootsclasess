@@ -145,7 +145,9 @@ const GoogleAuthButton = ({
       }
 
       if (firebaseErr.code === 'auth/unauthorized-domain') {
-        toast.error('Domain authorization pending in Firebase Console.');
+        const currentDomain = window.location.hostname;
+        console.error(`Firebase auth/unauthorized-domain: Add "${currentDomain}" to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+        toast.error(`Domain "${currentDomain}" is not authorized in Firebase Console. Please add it to Authorized Domains or use email/password login.`, { autoClose: 8000 });
       } else {
         // Fallback to seamless official redirect directly
         if (signInWithRedirect) {
