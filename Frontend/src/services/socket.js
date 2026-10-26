@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || "http://localhost:5050";
+const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+const SOCKET_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || (isProduction ? window.location.origin : "http://localhost:5050");
 
 class SocketService {
   constructor() {
@@ -9,8 +10,16 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io(SOCKET_URL);
-      console.log("Connected to socket server");
+      try {
+        this.socket = io(SOCKET_URL, {
+          transports: ["websocket", "polling"],
+          reconnectionAttempts: 5,
+          timeout: 6000
+        });
+        console.log("Connected to socket server");
+      } catch (err) {
+        console.warn("Socket connection warning:", err.message);
+      }
     }
     return this.socket;
   }

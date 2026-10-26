@@ -1,4 +1,5 @@
-const Base_Url = import.meta.env.VITE_BASE_URL || (typeof window !== "undefined" && window.location.origin.includes("vercel.app") ? window.location.origin : "http://localhost:5050");
+const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+const Base_Url = import.meta.env.VITE_BASE_URL || (isProduction ? window.location.origin : "http://localhost:5050");
 
 const api ={
     admin:{
