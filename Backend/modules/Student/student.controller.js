@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 import cloudinary from "../../config/cloudinary.js";
 import User from './student.model.js';
