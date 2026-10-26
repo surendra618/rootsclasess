@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
 
-const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
-const SOCKET_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || (isProduction ? window.location.origin : "http://localhost:5050");
+const BACKEND_URL = "https://rootsclasess.vercel.app";
+const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+const SOCKET_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || (isLocal ? "http://localhost:5050" : BACKEND_URL);
 
 class SocketService {
   constructor() {
