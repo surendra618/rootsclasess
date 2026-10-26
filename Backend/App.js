@@ -95,6 +95,8 @@ app.use("/policy", policyRouter);
 app.use("/policies", policyRouter);
 app.use("/batch", batchRouter);
 app.use("/batches", batchRouter);
+app.get("/notification", (req, res) => res.redirect("/student/notifications"));
+app.get("/notifications", (req, res) => res.redirect("/student/notifications"));
 
 
 

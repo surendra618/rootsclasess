@@ -14,15 +14,20 @@ const StudentLayout = () => {
   const isTestActive = useTestStore((state) => state.isTestActive);
 
   useEffect(() => {
+    // Initial sync of notifications from backend
+    useNotificationStore.getState().fetchNotifications();
+
     socketService.connect();
     socketService.joinStudents();
 
     socketService.on("new_test_available", (data) => {
       // ✅ Add to Global Store
       addNotification({
-        title: "New Test Available",
-        message: `${data.title} is now live!`,
+        id: `test-${data?._id || Date.now()}`,
+        title: "📝 New Test Available",
+        message: `${data.title || 'New Test'} is now live!`,
         type: "test",
+        link: "/test",
         data: data
       });
 
@@ -32,9 +37,33 @@ const StudentLayout = () => {
       });
     });
 
+    socketService.on("new_batch_announced", (data) => {
+      addNotification({
+        id: `batch-${data?._id || Date.now()}`,
+        title: "🚀 New Batch Announced",
+        message: `${data.title || 'New Batch'} admissions started!`,
+        type: "batch",
+        link: "/comingbatches",
+        data: data
+      });
+      toast.info(`New Batch: ${data.title}`, { position: "top-right", autoClose: 5000 });
+    });
+
+    socketService.on("announcement", (data) => {
+      addNotification({
+        id: `announcement-${Date.now()}`,
+        title: data?.title || "📢 Announcement",
+        message: data?.message || "Check out latest updates.",
+        type: "info",
+        link: data?.link || "/course",
+        data: data
+      });
+    });
 
     return () => {
       socketService.off("new_test_available");
+      socketService.off("new_batch_announced");
+      socketService.off("announcement");
     };
   }, []);
 

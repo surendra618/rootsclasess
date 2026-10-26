@@ -11,7 +11,8 @@ const api = {
         verifyOTP:Base_Url+"/student/verify-otp",
         resetPassword:Base_Url+"/student/reset-password",
         getTestforStudent: Base_Url+"/student/get-testfor-student",
-        googleAuth: Base_Url+"/student/google-auth"
+        googleAuth: Base_Url+"/student/google-auth",
+        notifications: Base_Url+"/student/notifications"
     },
     course:{
         getcourses:Base_Url+"/course/get_courses",

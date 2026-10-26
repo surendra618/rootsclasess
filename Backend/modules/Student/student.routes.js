@@ -1,20 +1,21 @@
 import { Router } from "express";
 import multer from "multer";
-import { EditProfileDetails, getScholarshipTestforStudent, Getuser, handleLogin, handleStdProfile, Registeruser, resetPassword, sendOTPEmail, verifyOTP, googleAuth } from "./student.controller.js";
+import { EditProfileDetails, getScholarshipTestforStudent, Getuser, handleLogin, handleStdProfile, Registeruser, resetPassword, sendOTPEmail, verifyOTP, googleAuth, getNotifications } from "./student.controller.js";
 import { authMiddleware } from "../../middleware/auth.js";
 
-const studentRouter =Router()
+const studentRouter = Router();
 const upload = multer({ dest: "uploads/" });
 
-studentRouter.post("/register",Registeruser)
-studentRouter.post("/login",handleLogin)
-studentRouter.post("/google-auth",googleAuth)
-studentRouter.post("/std-profile-img",upload.single("image"),handleStdProfile)
-studentRouter.post("/edit-profile-details",EditProfileDetails)
-studentRouter.post("/get-student",Getuser)
+studentRouter.get("/notifications", getNotifications);
+studentRouter.post("/register", Registeruser);
+studentRouter.post("/login", handleLogin);
+studentRouter.post("/google-auth", googleAuth);
+studentRouter.post("/std-profile-img", upload.single("image"), handleStdProfile);
+studentRouter.post("/edit-profile-details", EditProfileDetails);
+studentRouter.post("/get-student", Getuser);
 
-studentRouter.post("/send-otp",sendOTPEmail)
-studentRouter.post("/verify-otp",verifyOTP)
+studentRouter.post("/send-otp", sendOTPEmail);
+studentRouter.post("/verify-otp", verifyOTP);
 
 studentRouter.get("/test-email", async (req, res) => {
   const { sendOTP } = await import("../../config/emailServices.js");
@@ -38,8 +39,8 @@ studentRouter.get("/test-email", async (req, res) => {
 
 import { enrollCourse } from "./enrollStudent/enrollStudent.controller.js";
 
-studentRouter.post("/reset-password",resetPassword)
-studentRouter.post("/get-testfor-student",authMiddleware,getScholarshipTestforStudent)
-studentRouter.post("/enroll-course", enrollCourse)
+studentRouter.post("/reset-password", resetPassword);
+studentRouter.post("/get-testfor-student", authMiddleware, getScholarshipTestforStudent);
+studentRouter.post("/enroll-course", enrollCourse);
 
-export default studentRouter
+export default studentRouter;
