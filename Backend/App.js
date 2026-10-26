@@ -119,4 +119,9 @@ app.use((req, res) => {
   return res.status(404).send("Frontend build not found. Please build the frontend first.");
 });
 
+app.use((err, req, res, next) => {
+  console.error("Global Server Error:", err);
+  res.status(500).json({ success: false, message: err.message || "Internal Server Error" });
+});
+
 export default app;
