@@ -1,4 +1,4 @@
-const Base_Url = import.meta.env.VITE_BASE_URL || (typeof window !== "undefined" && window.location.origin.includes("vercel.app") ? "https://root-classes.vercel.app" : "http://localhost:5050");
+const Base_Url = import.meta.env.VITE_BASE_URL || (typeof window !== "undefined" && window.location.origin.includes("vercel.app") ? window.location.origin : "http://localhost:5050");
 
 const api = {
     instructor: {

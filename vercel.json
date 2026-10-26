@@ -1,5 +1,19 @@
 {
+  "version": 2,
+  "outputDirectory": "Frontend/dist",
   "rewrites": [
+    {
+      "source": "/(student|admin|instructor|course|courses|test|tests|batch|batches|notification|notifications|category|categories|blog|blogs|slider|sliders|testimonial|testimonials|enroll|enrollment|result|results|payment|payments|scholarship|scholarships|success-story|success-stories|callback|faculty|progress|policy|policies|health)/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/(student|admin|instructor|course|courses|test|tests|batch|batches|notification|notifications|category|categories|blog|blogs|slider|sliders|testimonial|testimonials|enroll|enrollment|result|results|payment|payments|scholarship|scholarships|success-story|success-stories|callback|faculty|progress|policy|policies|health)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
