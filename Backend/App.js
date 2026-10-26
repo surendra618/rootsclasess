@@ -54,6 +54,20 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Roots Classes Backend is running on Vercel" });
 });
+app.get("/", (req, res) => {
+  res.status(200).json({ 
+    status: "ok", 
+    message: "Roots Classes Backend API is running on Vercel",
+    endpoints: {
+      health: "/health",
+      student: "/student",
+      admin: "/admin",
+      batch: "/batch",
+      test: "/test",
+      notifications: "/student/notifications"
+    }
+  });
+});
 app.use("/receipts", express.static(path.join(process.cwd(), "receipts")));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
@@ -118,7 +132,7 @@ app.use((req, res) => {
   if (fs.existsSync(indexPath)) {
     return res.sendFile(indexPath);
   }
-  return res.status(404).send("Frontend build not found. Please build the frontend first.");
+  return res.status(404).json({ success: false, message: `Route ${req.method} ${req.originalUrl} not found on Roots Classes Backend API` });
 });
 
 app.use((err, req, res, next) => {

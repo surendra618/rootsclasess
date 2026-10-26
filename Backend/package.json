@@ -21,7 +21,6 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.3",
     "multer": "^2.1.1",
@@ -31,10 +30,6 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "puppeteer": "^25.16.0"
-  },
-  "allowScripts": {
-    "puppeteer@25.16.0": true
+    "nodemon": "^3.1.14"
   }
 }

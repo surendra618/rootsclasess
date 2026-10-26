@@ -1,5 +1,5 @@
 import { Router } from "express";
-import multer from "multer";
+import upload from "../../../utils/upload.js";
 import {
   getPolicyByType,
   saveOrUpdatePolicy,
@@ -8,7 +8,6 @@ import {
 } from "./policy.controller.js";
 
 const policyRouter = Router();
-const upload = multer({ dest: "uploads/" });
 
 // Public endpoints
 policyRouter.get("/get/:type", getPolicyByType);

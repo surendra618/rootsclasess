@@ -1,9 +1,8 @@
 import { Router } from "express"
 import { CreateSlider, DeleteSlider , GetSlider, UpdateSlider } from "./slider.controller.js"
-import multer from "multer";
+import Upload from "../../../utils/upload.js";
 
 const sliderRouter = Router()
-const Upload = multer({ dest: "uploads/" });
 
 const sliderUpload = Upload.fields([
     { name: "desktopImage", maxCount: 1 },

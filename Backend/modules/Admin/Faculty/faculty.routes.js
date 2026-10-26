@@ -1,9 +1,8 @@
 import { Router } from "express";
 import { CreateFaculty, DeleteFaculty, GetFaculty, UpdateFaculty } from "./faculty.controller.js";
-import multer from "multer";
+import Upload from "../../../utils/upload.js";
 
 const facultyRouter = Router();
-const Upload = multer({ dest: "uploads/" });
 
 facultyRouter.post("/create", Upload.single("image"), CreateFaculty);
 facultyRouter.get("/get", GetFaculty);

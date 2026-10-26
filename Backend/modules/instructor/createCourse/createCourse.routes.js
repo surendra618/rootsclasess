@@ -1,10 +1,9 @@
 import express, { Router } from "express"
 import {  createCourse, DeleteCourse, DeleteTopic, GetCategory, GetCreatedCourse, UpdateCourse, handleAddChapter, handleAddModule, handleAddTopic, handleDeleteChapter, handleDeleteModule, handleEditTopic, handleGetCourseById, handleUpdateChapter, handleUpdateModule, getFullCourseDetails, approvedCourse, getApprovedCourse, getInstructorById } from "./createCourse.controller.js"
-import multer from "multer";
+import Upload from "../../../utils/upload.js";
 
 import { authMiddleware } from "../../../middleware/auth.js"
 const createcourseRouter = Router()
-const Upload = multer({ dest: "uploads/" });
 createcourseRouter.post("/create_course", authMiddleware, Upload.single("image"), createCourse)
 createcourseRouter.post("/get_category",GetCategory)
 createcourseRouter.post("/get_course",GetCreatedCourse)

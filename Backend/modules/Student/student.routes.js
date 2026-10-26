@@ -1,10 +1,9 @@
 import { Router } from "express";
-import multer from "multer";
+import upload from "../../utils/upload.js";
 import { EditProfileDetails, getScholarshipTestforStudent, Getuser, handleLogin, handleStdProfile, Registeruser, resetPassword, sendOTPEmail, verifyOTP, googleAuth, getNotifications } from "./student.controller.js";
 import { authMiddleware } from "../../middleware/auth.js";
 
 const studentRouter = Router();
-const upload = multer({ dest: "uploads/" });
 
 studentRouter.get("/notifications", getNotifications);
 studentRouter.post("/register", Registeruser);
