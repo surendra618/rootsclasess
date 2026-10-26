@@ -98,14 +98,14 @@ const NotificationDropdown = ({ isDark = false, align = 'right' }) => {
         aria-label="Open notifications"
         className={`relative p-2 rounded-full transition-colors cursor-pointer ${
           isDark 
-            ? 'hover:bg-gray-800 text-gray-400 hover:text-white' 
-            : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-        } ${isOpen ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900') : ''}`}
+            ? 'hover:bg-gray-800 text-white' 
+            : 'hover:bg-gray-100 text-black'
+        } ${isOpen ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black') : ''}`}
       >
-        <Bell size={20} className={unreadCount > 0 ? 'text-[#FB0500]' : ''} />
+        <Bell size={20} className="text-black dark:text-white" />
         
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FB0500] text-[10px] font-bold text-white">
+          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FB0500] text-[10px] font-bold text-white shadow-xs">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
