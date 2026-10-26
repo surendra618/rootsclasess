@@ -3,19 +3,19 @@ import mongoose from "mongoose";
 
 dotenv.config();
 
-const connectdb=async ()=>{
-    try{
-        mongoose
-        .connect(process.env.MONGO_URL)
+let isConnected = false;
 
-        .then(()=>{
-            console.log("Database connected sucessfully");
-        });
-        
+const connectdb = async () => {
+    if (isConnected || mongoose.connection.readyState === 1) {
+        return;
     }
-    catch(error){
-    console.log("error while connecting database",error);
+    try {
+        await mongoose.connect(process.env.MONGO_URL);
+        isConnected = true;
+        console.log("Database connected successfully");
+    } catch (error) {
+        console.log("error while connecting database", error);
     }
-    
 };
+
 export default connectdb;

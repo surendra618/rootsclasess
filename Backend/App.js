@@ -37,11 +37,23 @@ const __dirname = path.dirname(__filename);
 
 connectdb();
 
+app.use(async (req, res, next) => {
+  try {
+    await connectdb();
+  } catch (err) {
+    console.error("DB connection error in middleware:", err);
+  }
+  next();
+});
+
 app.use(cors({
   origin: "*",
 }));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Roots Classes Backend is running on Vercel" });
+});
 app.use("/receipts", express.static(path.join(process.cwd(), "receipts")));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
