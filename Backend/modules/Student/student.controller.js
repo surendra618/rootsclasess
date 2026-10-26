@@ -717,33 +717,37 @@ export const getNotifications = async (req, res) => {
     const defaultAnnouncements = [
       {
         id: "rsat-scholarship-2026",
-        title: "🎉 RSAT 2026 Scholarship Exam Live",
+        title: "RSAT 2026 Scholarship Exam Live",
         message: "Roots Scholarship Admission Test 2026 is Live! Appear online & win up to 100% scholarship on NEET & JEE courses.",
         type: "scholarship",
+        image: "/logo.svg",
         link: "/scholarship",
         createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
       },
       {
         id: "target-batches-2026",
-        title: "📢 Target 2026-27 New Batches",
+        title: "Target 2026-27 New Batches",
         message: "Admissions open for Class 8-10 Foundation, NEET Droppers & IIT-JEE batches. Limited seats available!",
         type: "batch",
+        image: "/batch_banner.jpg",
         link: "/comingbatches",
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
       },
       {
         id: "free-mock-test-series",
-        title: "📝 All India Test Series Uploaded",
+        title: "All India Test Series Uploaded",
         message: "Free full syllabus mock tests and chapter-wise practice tests are now active. Check your rank now!",
         type: "test",
+        image: "/thumb_class10_science.jpg",
         link: "/test",
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       },
       {
         id: "roots-welcome",
-        title: "⭐ Welcome to Roots Classes!",
+        title: "Welcome to Roots Classes!",
         message: "Unlock your potential with expert faculties and interactive study resources.",
         type: "info",
+        image: "/logo.svg",
         link: "/course",
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
       }
@@ -751,13 +755,14 @@ export const getNotifications = async (req, res) => {
 
     let liveNotifications = [];
     try {
-      const tests = await Test.find({ isPublished: true }).sort({ createdAt: -1 }).limit(3).lean();
+      const tests = await Test.find({ isPublished: true }).sort({ createdAt: -1 }).limit(4).lean();
       tests.forEach(test => {
         liveNotifications.push({
           id: `test-${test._id}`,
-          title: `📝 New Test Available: ${test.title}`,
+          title: `New Test Available: ${test.title}`,
           message: test.description || `Test for ${test.className || 'Students'} is now open. Test duration: ${test.duration || 60} mins.`,
           type: "test",
+          image: "/thumb_class10_science.jpg",
           link: "/test",
           createdAt: test.createdAt ? new Date(test.createdAt).toISOString() : new Date().toISOString()
         });
@@ -772,9 +777,10 @@ export const getNotifications = async (req, res) => {
       batches.forEach(b => {
         liveNotifications.push({
           id: `batch-${b._id}`,
-          title: `🚀 ${b.title || 'New Batch'} Starting Soon`,
+          title: `${b.title || 'New Batch'} Starting Soon`,
           message: `${b.domain || 'Course'} batch starting on ${b.startDate || 'upcoming date'}. Timings: ${b.timing || 'Flexible'}.`,
           type: "batch",
+          image: b.bannerImg || "/batch_banner.jpg",
           link: "/comingbatches",
           createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : new Date().toISOString()
         });

@@ -26,32 +26,22 @@ const formatRelativeTime = (timestamp) => {
   }
 };
 
-const getNotificationMeta = (type) => {
-  switch (type) {
-    case 'scholarship':
-      return {
-        icon: GraduationCap,
-        bg: 'bg-amber-50 text-amber-600 border-amber-200',
-        badge: 'Scholarship'
-      };
-    case 'batch':
-      return {
-        icon: Calendar,
-        bg: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-        badge: 'Batch'
-      };
+const cleanTitle = (title) => {
+  if (!title) return '';
+  return title.replace(/^[\p{Emoji}\u200d\uFE0F\s]+/gu, '').trim();
+};
+
+const getNotificationRealImage = (notif) => {
+  if (notif.image) return notif.image;
+  switch (notif.type) {
     case 'test':
-      return {
-        icon: ClipboardList,
-        bg: 'bg-blue-50 text-blue-600 border-blue-200',
-        badge: 'Test'
-      };
+      return '/thumb_class10_science.jpg';
+    case 'batch':
+      return '/batch_banner.jpg';
+    case 'scholarship':
+    case 'info':
     default:
-      return {
-        icon: Sparkles,
-        bg: 'bg-red-50 text-[#FB0500] border-red-200',
-        badge: 'Alert'
-      };
+      return '/logo.svg';
   }
 };
 
@@ -182,9 +172,9 @@ const NotificationDropdown = ({ isDark = false, align = 'right' }) => {
               </div>
             ) : (
               notifications.map((notif) => {
-                const meta = getNotificationMeta(notif.type);
-                const IconComponent = meta.icon;
                 const isUnread = notif.isRead === false;
+                const realImg = getNotificationRealImage(notif);
+                const isSvg = realImg.endsWith('.svg');
 
                 return (
                   <div 
@@ -196,9 +186,17 @@ const NotificationDropdown = ({ isDark = false, align = 'right' }) => {
                         : (isDark ? 'hover:bg-gray-800/30' : 'hover:bg-gray-50')
                     }`}
                   >
-                    {/* Compact Icon */}
-                    <div className={`mt-0.5 w-6 h-6 rounded-sm flex items-center justify-center flex-shrink-0 border ${meta.bg}`}>
-                      <IconComponent size={13} />
+                    {/* Real Brand / Course Icon */}
+                    <div className="w-8 h-8 rounded-sm overflow-hidden flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                      <img 
+                        src={realImg} 
+                        alt="" 
+                        className={`w-full h-full ${isSvg ? 'object-contain p-1' : 'object-cover'}`}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/logo.svg';
+                        }}
+                      />
                     </div>
 
                     {/* Content */}
@@ -209,7 +207,7 @@ const NotificationDropdown = ({ isDark = false, align = 'right' }) => {
                             ? 'font-bold text-gray-900 dark:text-white' 
                             : 'font-medium text-gray-700 dark:text-gray-300'
                         }`}>
-                          {notif.title}
+                          {cleanTitle(notif.title)}
                         </span>
                         <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">
                           {formatRelativeTime(notif.timestamp || notif.createdAt)}

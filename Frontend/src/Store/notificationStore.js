@@ -6,36 +6,40 @@ import api from "../services/endpoints";
 export const DEFAULT_NOTIFICATIONS = [
   {
     id: "rsat-scholarship-2026",
-    title: "🎉 RSAT 2026 Registration Open",
+    title: "RSAT 2026 Registration Open",
     message: "Roots Scholarship Admission Test 2026 is Live! Appear online & win up to 100% scholarship on NEET & JEE courses.",
     type: "scholarship",
+    image: "/logo.svg",
     link: "/scholarship",
     timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
     isRead: false
   },
   {
     id: "target-batches-2026",
-    title: "📢 Target 2026-27 New Batches",
+    title: "Target 2026-27 New Batches",
     message: "New batches starting for Class 8-10 Foundation, NEET Droppers & IIT-JEE. Offline & hybrid batches commencing soon.",
     type: "batch",
+    image: "/batch_banner.jpg",
     link: "/comingbatches",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     isRead: false
   },
   {
     id: "free-mock-test-series",
-    title: "📝 All India Test Series Active",
+    title: "All India Test Series Active",
     message: "Comprehensive practice tests and chapter-wise mock exams are ready. Evaluate your rank and speed today!",
     type: "test",
+    image: "/thumb_class10_science.jpg",
     link: "/test",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
     isRead: false
   },
   {
     id: "roots-welcome",
-    title: "⭐ Welcome to Roots Classes!",
+    title: "Welcome to Roots Classes!",
     message: "Access premium lectures, personalized mentorship, and comprehensive test series.",
     type: "info",
+    image: "/logo.svg",
     link: "/course",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
     isRead: true
