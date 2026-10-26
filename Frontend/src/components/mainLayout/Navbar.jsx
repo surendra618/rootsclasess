@@ -150,17 +150,16 @@ const Navbar = () => {
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center gap-2.5 px-3 py-1.5 rounded-sm border border-gray-100 hover:border-gray-200 bg-white hover:bg-gray-50/50 transition-all text-sm cursor-pointer"
+                      className={`w-9 h-9 rounded-full transition-all flex items-center justify-center cursor-pointer focus:outline-none overflow-hidden ring-2 ${isDropdownOpen ? 'ring-[#FB0500]' : 'ring-gray-200 hover:ring-[#FB0500]/50'}`}
+                      title={getName()}
                     >
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#FB0500] to-red-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-xs overflow-hidden">
+                      <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#FB0500] to-red-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-xs overflow-hidden">
                         {getProfileImage() ? (
                           <img src={getProfileImage()} alt={getName()} className="w-full h-full object-cover" />
                         ) : (
-                          getName()?.charAt(0)?.toUpperCase() || <User size={13} className="text-white" />
+                          getName()?.charAt(0)?.toUpperCase() || <User size={15} className="text-white" />
                         )}
                       </div>
-                      <span className="text-gray-800 font-semibold text-xs sm:text-sm max-w-[120px] truncate">{getName()}</span>
-                      <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {isDropdownOpen && (

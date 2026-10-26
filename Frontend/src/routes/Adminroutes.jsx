@@ -1,3 +1,4 @@
+import Dashboard from "../pages/Admin/Dashboard";
 import AllStudents from "../pages/Admin/StudentManagement/AllStudents";
 import Enrollment from "../pages/Admin/Courses/Enrollment";
 import TestPurchases from "../pages/Admin/TestPurchases";
@@ -13,8 +14,9 @@ import SuccessStoriesManagement from "../pages/Admin/SuccessStoriesManagement";
 import FacultyManagement from "../pages/Admin/FacultyManagement";
 import Settings from "../pages/Admin/Settings";
 import SchollershipResult from "../pages/Admin/SchollershipResult";
-import Dashboard from "../pages/Admin/Dashboard";
 import ManagePolicies from "../pages/Admin/ManagePolicies";
+import ManageBatches from "../pages/Admin/Batches/ManageBatches";
+import BatchApplications from "../pages/Admin/Batches/BatchApplications";
 
 const Adminroutes = [
   {
@@ -170,6 +172,24 @@ const Adminroutes = [
       {
         path: "faculty",
         element: <FacultyManagement />,
+      },
+
+      // Batches & Admissions Management
+      {
+        path: "batches",
+        element: <ManageBatches />,
+      },
+      {
+        path: "manage-batches",
+        element: <ManageBatches />,
+      },
+      {
+        path: "batch-applications",
+        element: <BatchApplications />,
+      },
+      {
+        path: "batch-leads",
+        element: <BatchApplications />,
       },
 
       // Terms & Privacy Policies Management

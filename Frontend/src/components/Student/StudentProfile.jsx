@@ -566,10 +566,10 @@ const StudentProfile = () => {
 
                                 {/* Profile Info Row */}
                                 <div className="p-5 md:p-6 pt-0">
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
-                                        <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-                                            <div className="relative group flex-shrink-0 -mt-10 md:-mt-12">
-                                                <div className="w-20 h-20 md:w-22 md:h-22 border-3 border-white bg-white overflow-hidden relative rounded-full shadow-md">
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
+                                            <div className="relative group flex-shrink-0 -mt-12 md:-mt-16 z-10">
+                                                <div className="w-20 h-20 md:w-24 md:h-24 border-4 border-white bg-white overflow-hidden relative rounded-full shadow-lg">
                                                     <img
                                                         src={profileImageUrl}
                                                         alt={studentData.fullName}

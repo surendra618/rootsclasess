@@ -6,7 +6,8 @@ import api from '../../../services/endpoints';
 import {
   ArrowLeft, BookOpen, Clock, ChevronDown, ChevronRight,
   Play, FileText, Lock, Unlock, CheckCircle, X, CreditCard,
-  GraduationCap, Users, Info, Download, Tag, Percent, Calendar, Mail, Phone, User
+  GraduationCap, Users, Info, Download, Tag, Percent, Calendar, Mail, Phone, User,
+  ShieldCheck, Sparkles, Award, Star, Check, ExternalLink
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -149,7 +150,7 @@ const CourseDetails = () => {
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [expandedModules, setExpandedModules] = useState({});
   const [expandedChapters, setExpandedChapters] = useState({});
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('curriculum');
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -199,6 +200,10 @@ const CourseDetails = () => {
 
       if (isMounted) {
         setCourse(courseData || null);
+        if (courseData?.modules?.length > 0) {
+          setExpandedModules({ 0: true });
+          setExpandedChapters({ '0-0': true });
+        }
         setLoading(false);
       }
     };
@@ -718,147 +723,188 @@ const CourseDetails = () => {
   // Get instructor details
   const instructor = getInstructorDetails(course);
 
+  // Find first previewable video topic for trailer/preview card
+  const firstPreviewTopic = course?.modules
+    ?.flatMap(m => m.chapters?.flatMap(c => c.topics) || [])
+    ?.find(t => t?.isPreviewFree && t?.videoUrl) ||
+    course?.modules
+    ?.flatMap(m => m.chapters?.flatMap(c => c.topics) || [])
+    ?.find(t => t?.videoUrl);
+
+  const expandAllModules = () => {
+    const allMods = {};
+    const allChaps = {};
+    course?.modules?.forEach((m, mIdx) => {
+      allMods[mIdx] = true;
+      m.chapters?.forEach((c, cIdx) => {
+        allChaps[`${mIdx}-${cIdx}`] = true;
+      });
+    });
+    setExpandedModules(allMods);
+    setExpandedChapters(allChaps);
+  };
+
+  const collapseAllModules = () => {
+    setExpandedModules({});
+    setExpandedChapters({});
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/60 text-gray-800 pb-16 font-sans">
       {/* Toast */}
       {toast.show && (
-        <div className={`fixed top-5 right-4 z-[9999] px-5 py-3 rounded-sm shadow-lg text-sm font-medium text-white flex items-center gap-2 transition-all ${toast.type === 'success' ? 'bg-green-500' : toast.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-          }`}>
-          {toast.type === 'success' && <CheckCircle size={15} />}
-          {toast.type === 'error' && <X size={15} />}
-          {toast.message}
+        <div className={`fixed top-5 right-5 z-[9999] px-4 py-3 rounded-md shadow-lg text-sm font-semibold text-white flex items-center gap-2 transition-all ${
+          toast.type === 'success' ? 'bg-emerald-600' : toast.type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+        }`}>
+          {toast.type === 'success' && <CheckCircle size={16} />}
+          {toast.type === 'error' && <X size={16} />}
+          <span>{toast.message}</span>
         </div>
       )}
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 md:pt-25 pb-8 px-4 bg-black/40 overflow-y-auto" onClick={() => !paymentProcessing && setShowPaymentModal(false)}>
-          <div className="w-full max-w-sm bg-white rounded-sm shadow-xl overflow-hidden mt-1" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">Complete Enrollment</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="p-1 hover:bg-gray-100 rounded-sm">
-                <X size={16} className="text-gray-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto" onClick={() => !paymentProcessing && setShowPaymentModal(false)}>
+          <div className="w-full max-w-md bg-white rounded-md shadow-lg overflow-hidden border border-gray-200 my-8" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-2">
+                <CreditCard size={18} className="text-blue-600" />
+                <h3 className="text-sm font-bold text-gray-900">Complete Enrollment</h3>
+              </div>
+              <button onClick={() => setShowPaymentModal(false)} className="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={16} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-5">
               <div className="text-center mb-5">
-                <p className="text-sm text-gray-500 mb-1">{course.title}</p>
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Enrolling In</p>
+                <h4 className="text-sm font-bold text-gray-900 line-clamp-2 px-2 mb-3">{course.title}</h4>
 
-                {hasPreviousPurchase ? (
-                  <div>
-                    <p className="text-3xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-gray-400 mt-1">Regular price</p>
-                  </div>
-                ) : showDiscountBlock ? (
-                  <div className="mb-2">
-                    <p className="text-sm text-gray-400 line-through">₹{originalPrice.toLocaleString('en-IN')}</p>
-                    <p className="text-3xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
-                    <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-green-100 rounded-sm">
-                      <Percent size={12} className="text-green-600" />
-                      <span className="text-xs font-semibold text-green-700">{discountApplied}% First Purchase Discount!</span>
+                <div className="p-3.5 rounded-md bg-gray-50 border border-gray-200 inline-block w-full">
+                  {hasPreviousPurchase ? (
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
+                      <p className="text-xs text-gray-400 mt-1">Standard course fee</p>
                     </div>
-                    {(discountValidFrom || discountValidUntil) && (
-                      <div className="mt-2 flex items-center justify-center gap-1 text-xs text-gray-500">
-                        <Calendar size={12} />
-                        {discountValidFrom && discountValidUntil ? (
-                          <span>Valid: {discountValidFrom} - {discountValidUntil}</span>
-                        ) : discountValidUntil ? (
-                          <span>Valid until: {discountValidUntil}</span>
-                        ) : discountValidFrom ? (
-                          <span>Valid from: {discountValidFrom}</span>
-                        ) : null}
+                  ) : showDiscountBlock ? (
+                    <div>
+                      <p className="text-xs text-gray-400 line-through">₹{originalPrice.toLocaleString('en-IN')}</p>
+                      <p className="text-2xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
+                      <div className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-semibold">
+                        <Percent size={11} /> {discountApplied}% First Purchase Discount Applied!
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-3xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
-                )}
-
-                <p className="text-xs text-gray-500 mt-2">✓ Receipt will be sent to your email</p>
+                      {(discountValidFrom || discountValidUntil) && (
+                        <div className="mt-1.5 text-xs text-gray-500 flex items-center justify-center gap-1">
+                          <Calendar size={11} />
+                          {discountValidFrom && discountValidUntil ? (
+                            <span>Valid: {discountValidFrom} - {discountValidUntil}</span>
+                          ) : discountValidUntil ? (
+                            <span>Valid until: {discountValidUntil}</span>
+                          ) : (
+                            <span>Valid from: {discountValidFrom}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1.5 flex items-center justify-center gap-1">
+                    <CheckCircle size={12} className="text-emerald-500" /> Instant access & receipt sent to email
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-gray-50 rounded-sm p-4 mb-5 space-y-2 text-sm">
+              <div className="bg-gray-50 rounded-md p-3.5 mb-4 space-y-2 text-xs border border-gray-200">
                 <div className="flex justify-between text-gray-600">
-                  <span>Total lessons</span>
-                  <span className="font-medium text-gray-900">{tt}</span>
+                  <span className="flex items-center gap-1.5"><BookOpen size={13} className="text-gray-400" /> Total Curriculum</span>
+                  <span className="font-semibold text-gray-900">{tt} Lessons</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Free preview</span>
-                  <span className="font-medium text-green-600">{ft} lessons</span>
+                  <span className="flex items-center gap-1.5"><Unlock size={13} className="text-emerald-500" /> Free Previews</span>
+                  <span className="font-semibold text-emerald-600">{ft} lessons</span>
                 </div>
                 {pt > 0 && (
                   <div className="flex justify-between text-gray-600">
-                    <span>Premium lessons</span>
-                    <span className="font-medium text-blue-600">{pt}</span>
+                    <span className="flex items-center gap-1.5"><Lock size={13} className="text-blue-500" /> Premium Content</span>
+                    <span className="font-semibold text-blue-600">{pt} lessons</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-sm mb-5">
-                <CreditCard size={16} className="text-gray-400" />
-                <span className="text-sm font-medium text-gray-700">Razorpay — Secure Payment</span>
+              <div className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-100/70 rounded-md mb-4 text-xs text-gray-600">
+                <ShieldCheck size={15} className="text-emerald-600" />
+                <span>100% Secure Checkout via Razorpay SSL</span>
               </div>
 
               <button
                 onClick={handlePayment}
                 disabled={paymentProcessing}
-                className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-sm hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-md shadow-xs active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {paymentProcessing ? 'Processing...' : `Pay ₹${finalPrice.toLocaleString('en-IN')} & Enroll`}
+                {paymentProcessing ? 'Processing Secure Payment...' : `Pay ₹${finalPrice.toLocaleString('en-IN')} & Start Learning`}
               </button>
 
               <button
                 onClick={() => setShowPaymentModal(false)}
                 disabled={paymentProcessing}
-                className="w-full mt-2 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="w-full mt-2 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
               >
-                Cancel
+                Cancel and return
               </button>
-
-              <p className="text-xs text-gray-400 text-center mt-3">
-                After payment, you'll receive a receipt via email
-              </p>
             </div>
           </div>
         </div>
       )}
 
       {/* Main layout */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        {/* Back button */}
-        <button onClick={() => navigate('/course')} className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-5 transition-colors">
-          <ArrowLeft size={14} /> Back to Courses
-        </button>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 text-xs text-gray-500 mb-5">
+          <button
+            onClick={() => navigate('/course')}
+            className="hover:text-blue-600 transition-colors flex items-center gap-1 font-medium group cursor-pointer"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" /> Back to Courses
+          </button>
+          <span className="text-gray-300">/</span>
+          {course.category?.name && (
+            <>
+              <span className="text-gray-600 font-medium">{course.category.name}</span>
+              <span className="text-gray-300">/</span>
+            </>
+          )}
+          <span className="text-gray-900 font-semibold truncate max-w-[200px] sm:max-w-xs">{course.title}</span>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* LEFT COLUMN */}
-          <div className="flex-1 min-w-0">
-            {/* Scholarship Banner - only shown if no previous purchase, not enrolled, course has price, and scholarship exists */}
+          {/* LEFT COLUMN - Primary Course Details & Curriculum */}
+          <div className="flex-1 min-w-0 w-full">
+            {/* Scholarship Banner */}
             {scholarship && !hasPreviousPurchase && !isEnrolled && course?.price > 0 && !isCompletelyFree() && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-sm p-5 mb-5 flex items-start gap-4">
-                <div className="bg-blue-100 p-2.5 rounded-sm flex-shrink-0 mt-0.5">
-                  <Tag size={20} className="text-blue-600" />
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-5 shadow-xs flex items-start gap-3">
+                <div className="bg-amber-500 text-white p-2 rounded-md shadow-xs flex-shrink-0 mt-0.5">
+                  <Sparkles size={18} />
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                    Special Scholarship Available!
-                    <span className="bg-blue-600 text-white text-xs px-2.5 py-0.5 rounded-sm font-semibold shadow-sm">
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-bold text-gray-900">Special Scholarship Unlocked!</h3>
+                    <span className="bg-amber-600 text-white text-[11px] px-2 py-0.5 rounded font-bold">
                       {scholarship.discount}% OFF
                     </span>
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">
-                    You have a special scholarship discount of <span className="font-semibold text-gray-800">{scholarship.discount}%</span> on this course.
-                    Enroll now to claim your discount!
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                    You have qualified for a special <span className="font-semibold text-gray-800">{scholarship.discount}% scholarship discount</span> on this course. Claim it before expiry!
                   </p>
                   {(scholarship.validFrom || scholarship.validUntil) && (
-                    <div className="flex items-center gap-1.5 mt-2.5 text-xs text-gray-500 font-medium bg-white/60 w-fit px-3 py-1.5 rounded-sm border border-blue-50">
-                      <Calendar size={13} className="text-blue-500" />
+                    <div className="flex items-center gap-1 mt-2 text-xs text-amber-900 font-medium bg-amber-100/70 w-fit px-2.5 py-0.5 rounded border border-amber-200/50">
+                      <Calendar size={12} className="text-amber-700" />
                       {scholarship.validFrom && scholarship.validUntil ? (
-                        <span>Valid from {formatDate(scholarship.validFrom)} to {formatDate(scholarship.validUntil)}</span>
+                        <span>Valid: {formatDate(scholarship.validFrom)} to {formatDate(scholarship.validUntil)}</span>
                       ) : scholarship.validUntil ? (
-                        <span>Valid until {formatDate(scholarship.validUntil)}</span>
+                        <span>Valid until: {formatDate(scholarship.validUntil)}</span>
                       ) : (
-                        <span>Valid from {formatDate(scholarship.validFrom)}</span>
+                        <span>Valid from: {formatDate(scholarship.validFrom)}</span>
                       )}
                     </div>
                   )}
@@ -866,81 +912,369 @@ const CourseDetails = () => {
               </div>
             )}
 
-            {/* Course header */}
-            <div className="bg-white rounded-sm border border-gray-100 p-6 mb-5">
-              <div className="flex flex-wrap gap-2 mb-3">
+            {/* Hero Course Header Card */}
+            <div className="bg-white rounded-md border border-gray-200 p-6 sm:p-7 mb-5 shadow-xs">
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-3.5">
                 {course.category?.name && (
-                  <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-sm">{course.category.name}</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <Tag size={11} className="text-blue-500" />
+                    {course.category.name}
+                  </span>
                 )}
-                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-sm capitalize">{course.level || 'Beginner'}</span>
-                {isEnrolled && <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-sm flex items-center gap-1"><CheckCircle size={11} /> Enrolled</span>}
-                {!isEnrolled && isCompletelyFree() && <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-sm">Free</span>}
-                {!isEnrolled && !isCompletelyFree() && hasPreviewContent() && <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-sm">Free Preview Available</span>}
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 capitalize border border-gray-200/70">
+                  <GraduationCap size={12} className="text-gray-500" />
+                  {course.level || 'Beginner'}
+                </span>
+                {isEnrolled && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle size={12} className="text-emerald-600" /> Enrolled
+                  </span>
+                )}
+                {!isEnrolled && isCompletelyFree() && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold bg-emerald-600 text-white shadow-xs">
+                    <Sparkles size={11} /> 100% Free
+                  </span>
+                )}
+                {!isEnrolled && !isCompletelyFree() && hasPreviewContent() && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <Unlock size={11} className="text-emerald-600" /> Free Preview Available
+                  </span>
+                )}
                 {showDiscountBlock && !isEnrolled && (
-                  <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-sm flex items-center gap-1">
-                    <Percent size={11} /> {discountApplied}% First Purchase Discount
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    <Percent size={11} className="text-amber-600" /> {discountApplied}% First Purchase Discount
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">{course.title}</h1>
+
+              {/* Main Title */}
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-snug mb-3">
+                {course.title}
+              </h1>
+
+              {/* Description */}
               {course.description && (
-                <div className="text-gray-600 text-sm leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: course.description }} />
+                <div
+                  className="text-gray-600 text-sm leading-relaxed mb-5"
+                  dangerouslySetInnerHTML={{ __html: course.description }}
+                />
               )}
-              <div className="flex flex-wrap gap-4 pt-3 border-t border-gray-100">
-                <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                  <BookOpen size={15} className="text-blue-500" />
-                  {course.modules?.length || 0} Modules
+
+              {/* Quick Metrics Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-gray-50/90 border border-gray-200/80">
+                  <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <BookOpen size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-500 font-medium">Curriculum</p>
+                    <p className="text-xs font-bold text-gray-900">{course.modules?.length || 0} Modules</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                  <Play size={15} className="text-purple-500" />
-                  {tt} Lessons
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-gray-50/90 border border-gray-200/80">
+                  <div className="w-8 h-8 rounded bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Play size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-500 font-medium">Video Lessons</p>
+                    <p className="text-xs font-bold text-gray-900">{tt} Lectures</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-gray-50/90 border border-gray-200/80">
+                  <div className="w-8 h-8 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Unlock size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-500 font-medium">Free Access</p>
+                    <p className="text-xs font-bold text-emerald-700">{ft} Previews</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-gray-50/90 border border-gray-200/80">
+                  <div className="w-8 h-8 rounded bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                    <FileText size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-500 font-medium">Study Notes</p>
+                    <p className="text-xs font-bold text-gray-900">PDF Included</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-sm mb-5 w-fit">
-              {['overview', 'curriculum'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2 text-sm font-medium rounded-sm transition-colors capitalize ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  {tab}
-                </button>
-              ))}
+            {/* Segmented Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b border-gray-200 mb-5">
+              <button
+                onClick={() => setActiveTab('curriculum')}
+                className={`pb-2.5 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+                  activeTab === 'curriculum'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+                }`}
+              >
+                <BookOpen size={16} /> Course Curriculum
+                <span className={`text-xs px-2 py-0.5 rounded font-bold ${
+                  activeTab === 'curriculum' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {tt}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`pb-2.5 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+                  activeTab === 'overview'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+                }`}
+              >
+                <Info size={16} /> Course Overview
+              </button>
             </div>
 
-            {/* Overview Tab Content */}
+            {/* CURRICULUM TAB CONTENT */}
+            {activeTab === 'curriculum' && (
+              <div className="space-y-3.5">
+                {/* Curriculum Header Controls */}
+                <div className="flex items-center justify-between px-1">
+                  <div className="text-xs text-gray-500">
+                    Showing <span className="font-semibold text-gray-700">{course.modules?.length || 0} modules</span> · <span className="font-semibold text-gray-700">{tt} lessons</span> · <span className="font-semibold text-emerald-600">{ft} free previews</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs font-medium">
+                    <button onClick={expandAllModules} className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                      Expand All
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button onClick={collapseAllModules} className="text-gray-500 hover:text-gray-700 cursor-pointer">
+                      Collapse All
+                    </button>
+                  </div>
+                </div>
+
+                {course.modules?.length > 0 ? (
+                  <div className="space-y-3">
+                    {course.modules.map((mod, mIdx) => {
+                      const modLessonCount = mod.chapters?.reduce((s, c) => s + (c.topics?.length || 0), 0) || 0;
+                      const isModOpen = !!expandedModules[mIdx];
+
+                      return (
+                        <div key={mod._id || mIdx} className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+                          {/* Module Header Button */}
+                          <button
+                            onClick={() => toggleModule(mIdx)}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50/80 transition-colors text-left cursor-pointer gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-7 h-7 rounded bg-blue-50 text-blue-700 font-bold text-xs flex items-center justify-center flex-shrink-0 border border-blue-100">
+                                {mIdx + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <h3 className="text-sm font-bold text-gray-900 truncate">
+                                  {mod.title}
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {mod.chapters?.length || 0} Chapters · {modLessonCount} Lessons
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="hidden sm:inline-block text-xs font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                {modLessonCount} Lessons
+                              </span>
+                              <div className={`w-7 h-7 rounded flex items-center justify-center text-gray-500 transition-transform duration-200 ${isModOpen ? 'rotate-180 text-blue-600' : ''}`}>
+                                <ChevronDown size={15} />
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* Module Chapters & Topics */}
+                          {isModOpen && (
+                            <div className="border-t border-gray-200 bg-gray-50/40 p-3 space-y-2.5">
+                              {mod.chapters?.map((ch, cIdx) => {
+                                const chapKey = `${mIdx}-${cIdx}`;
+                                const isChapOpen = expandedChapters[chapKey] !== false;
+
+                                return (
+                                  <div key={ch._id || cIdx} className="bg-white rounded border border-gray-200/90 overflow-hidden shadow-xs">
+                                    {/* Chapter Bar */}
+                                    <button
+                                      onClick={() => toggleChapter(mIdx, cIdx)}
+                                      className="w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50/80 hover:bg-gray-100/60 transition-colors text-left cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <ChevronDown size={13} className={`text-gray-400 transition-transform ${isChapOpen ? 'rotate-0' : '-rotate-90'}`} />
+                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                                          Chapter {cIdx + 1}: {ch.title}
+                                        </span>
+                                      </div>
+                                      <span className="text-xs text-gray-400">
+                                        {ch.topics?.length || 0} Lessons
+                                      </span>
+                                    </button>
+
+                                    {/* Topics List */}
+                                    {isChapOpen && (
+                                      <div className="p-2 space-y-1.5">
+                                        {ch.topics?.map((topic, tIdx) => {
+                                          const hasAccess = isEnrolled || topic.isPreviewFree || isCompletelyFree();
+
+                                          return (
+                                            <div
+                                              key={topic._id || tIdx}
+                                              className="p-3 rounded border border-gray-100 hover:border-gray-200 bg-white hover:bg-gray-50/60 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 group"
+                                            >
+                                              {/* Topic Info */}
+                                              <div className="flex items-start gap-2.5 min-w-0">
+                                                <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
+                                                  hasAccess
+                                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                    : 'bg-gray-100 text-gray-400 border border-gray-200'
+                                                }`}>
+                                                  {hasAccess ? (
+                                                    <Play size={13} className="ml-0.5 fill-emerald-600/20" />
+                                                  ) : (
+                                                    <Lock size={12} />
+                                                  )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                  <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                                    {tIdx + 1}. {topic.title}
+                                                  </p>
+                                                  <div className="flex items-center gap-2 mt-0.5">
+                                                    {(isEnrolled || (isCompletelyFree() && !isEnrolled)) && (
+                                                      <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                        <Check size={10} /> Full Access
+                                                      </span>
+                                                    )}
+                                                    {!isEnrolled && !isCompletelyFree() && topic.isPreviewFree && (
+                                                      <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/70">
+                                                        <Sparkles size={10} /> Free Preview
+                                                      </span>
+                                                    )}
+                                                    {!isEnrolled && !isCompletelyFree() && !topic.isPreviewFree && (
+                                                      <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                        <Lock size={10} /> Premium
+                                                      </span>
+                                                    )}
+                                                    {topic.duration && (
+                                                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                                                        <Clock size={10} /> {topic.duration} min
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {/* Actions */}
+                                              <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-center">
+                                                {topic.videoUrl && (
+                                                  <button
+                                                    onClick={() => playVideo(topic)}
+                                                    disabled={!hasAccess}
+                                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold transition-all cursor-pointer ${
+                                                      hasAccess
+                                                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs active:scale-95'
+                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-70'
+                                                    }`}
+                                                  >
+                                                    <Play size={11} className="fill-current" />
+                                                    {topic.isPreviewFree && !isEnrolled && !isCompletelyFree() ? 'Watch Preview' : 'Watch'}
+                                                  </button>
+                                                )}
+
+                                                {(topic.notes || topic.notesUrl || topic.description) && (
+                                                  <button
+                                                    onClick={() => handleDownloadNotesPDF(topic)}
+                                                    disabled={!hasAccess}
+                                                    title="Download Notes PDF"
+                                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold transition-all cursor-pointer ${
+                                                      hasAccess
+                                                        ? 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-70'
+                                                    }`}
+                                                  >
+                                                    <FileText size={11} /> Notes
+                                                  </button>
+                                                )}
+
+                                                {topic.description && (
+                                                  <button
+                                                    onClick={() => openTopicInfo(topic)}
+                                                    title="Lesson Details"
+                                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                                                  >
+                                                    <Info size={11} /> Info
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-10 text-center bg-white rounded-md border border-gray-200">
+                    <BookOpen size={36} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-sm font-semibold text-gray-700">Curriculum Coming Soon</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Lectures are currently being organized.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* OVERVIEW TAB CONTENT */}
             {activeTab === 'overview' && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-sm border border-gray-100 p-5">
-                  <h2 className="text-base font-bold text-gray-900 mb-3">About this course</h2>
-                  <p className="text-sm text-gray-600 leading-relaxed">{course.description || 'No description available.'}</p>
+              <div className="space-y-5">
+                <div className="bg-white rounded-md border border-gray-200 p-6 shadow-xs">
+                  <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <BookOpen size={16} className="text-blue-600" />
+                    About This Course
+                  </h2>
+                  <div
+                    className="text-gray-600 text-sm leading-relaxed space-y-2.5"
+                    dangerouslySetInnerHTML={{ __html: course.description || 'Comprehensive learning masterclass designed by expert faculties at Roots Classes.' }}
+                  />
                 </div>
 
                 {course.whatYouWillLearn?.length > 0 && (
-                  <div className="bg-white rounded-sm border border-gray-100 p-5">
-                    <h2 className="text-base font-bold text-gray-900 mb-3">What you'll learn</h2>
-                    <div className="grid sm:grid-cols-2 gap-2.5">
+                  <div className="bg-white rounded-md border border-gray-200 p-6 shadow-xs">
+                    <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <Sparkles size={16} className="text-emerald-600" />
+                      What You'll Master
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-3">
                       {course.whatYouWillLearn.map((item, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <CheckCircle size={15} className="text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">{item}</span>
+                        <div key={i} className="flex items-start gap-2 p-2.5 rounded bg-gray-50 border border-gray-100">
+                          <CheckCircle size={15} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm font-medium text-gray-800">{item}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
+
                 {course.requirements?.length > 0 && (
-                  <div className="bg-white rounded-sm border border-gray-100 p-5">
-                    <h2 className="text-base font-bold text-gray-900 mb-3">Requirements</h2>
+                  <div className="bg-white rounded-md border border-gray-200 p-6 shadow-xs">
+                    <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <Check size={16} className="text-purple-600" />
+                      Prerequisites & Requirements
+                    </h2>
                     <ul className="space-y-2">
                       {course.requirements.map((r, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-sm bg-gray-400 flex-shrink-0" />
-                          {r}
+                        <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-gray-600">
+                          <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 flex-shrink-0" />
+                          <span>{r}</span>
                         </li>
                       ))}
                     </ul>
@@ -948,273 +1282,214 @@ const CourseDetails = () => {
                 )}
               </div>
             )}
-
-            {/* Curriculum Tab */}
-            {activeTab === 'curriculum' && (
-              <div className="bg-white rounded-sm border border-gray-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100">
-                  <h2 className="text-base font-bold text-gray-900">Course Curriculum</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {course.modules?.length || 0} modules · {tt} lessons · {ft} free previews
-                  </p>
-                </div>
-
-                {course.modules?.length > 0 ? (
-                  <div className="divide-y divide-gray-50">
-                    {course.modules.map((mod, mIdx) => (
-                      <div key={mod._id || mIdx}>
-                        <button
-                          onClick={() => toggleModule(mIdx)}
-                          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors text-left"
-                        >
-                          <div className="flex items-center gap-3">
-                            {expandedModules[mIdx] ? <ChevronDown size={15} className="text-gray-400" /> : <ChevronRight size={15} className="text-gray-400" />}
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">Module {mIdx + 1}: {mod.title}</p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-gray-400 flex-shrink-0 ml-4">
-                            {mod.chapters?.reduce((s, c) => s + (c.topics?.length || 0), 0)} lessons
-                          </span>
-                        </button>
-
-                        {expandedModules[mIdx] && (
-                          <div className="bg-gray-50 border-t border-gray-100">
-                            {mod.chapters?.map((ch, cIdx) => (
-                              <div key={ch._id || cIdx} className="border-b border-gray-100 last:border-0">
-                                <button
-                                  onClick={() => toggleChapter(mIdx, cIdx)}
-                                  className="w-full flex items-center justify-between pl-10 pr-5 py-3 hover:bg-gray-100 transition-colors text-left"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {expandedChapters[`${mIdx}-${cIdx}`] ? <ChevronDown size={13} className="text-gray-400" /> : <ChevronRight size={13} className="text-gray-400" />}
-                                    <span className="text-sm text-gray-700 font-medium">{ch.title}</span>
-                                  </div>
-                                  <span className="text-xs text-gray-400 ml-4">{ch.topics?.length || 0} lessons</span>
-                                </button>
-
-                                {expandedChapters[`${mIdx}-${cIdx}`] && (
-                                  <div className="pb-2 space-y-1">
-                                    {ch.topics?.map((topic, tIdx) => {
-                                      const hasAccess = isEnrolled || topic.isPreviewFree || isCompletelyFree();
-                                      return (
-                                        <div key={topic._id || tIdx} className="mx-4 rounded-sm bg-white border border-gray-100 overflow-hidden">
-                                          <div className="flex items-center justify-between px-4 py-3 gap-3">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                              <div className={`w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 ${hasAccess ? 'bg-green-50' : 'bg-gray-100'}`}>
-                                                {hasAccess ? <Play size={13} className="text-green-600 ml-0.5" /> : <Lock size={12} className="text-gray-400" />}
-                                              </div>
-                                              <div className="min-w-0">
-                                                <p className="text-sm text-gray-800 truncate">{tIdx + 1}. {topic.title}</p>
-                                                <div className="flex gap-1.5 mt-0.5">
-                                                  {(isEnrolled || (isCompletelyFree() && !isEnrolled)) && (
-                                                    <span className="text-xs text-blue-600">Full access</span>
-                                                  )}
-                                                  {!isEnrolled && !isCompletelyFree() && topic.isPreviewFree && (
-                                                    <span className="text-xs text-green-600">Free preview</span>
-                                                  )}
-                                                  {!isEnrolled && !isCompletelyFree() && !topic.isPreviewFree && (
-                                                    <span className="text-xs text-gray-400">Premium</span>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                                              {topic.videoUrl && (
-                                                <button
-                                                  onClick={() => playVideo(topic)}
-                                                  disabled={!hasAccess}
-                                                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors ${hasAccess
-                                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    }`}
-                                                >
-                                                  <Play size={11} /> Watch
-                                                </button>
-                                              )}
-
-                                              {topic.description && (
-                                                <button
-                                                  onClick={() => openTopicInfo(topic)}
-                                                  className="px-2.5 py-1.5 rounded-sm text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
-                                                >
-                                                  <Info size={11} /> Info
-                                                </button>
-                                              )}
-
-                                              {(topic.notes || topic.notesUrl) && (
-                                                <button
-                                                  onClick={() => handleDownloadNotesPDF(topic)}
-                                                  disabled={!hasAccess}
-                                                  className={`px-2.5 py-1.5 rounded-sm text-xs font-medium transition-colors flex items-center gap-1 ${hasAccess
-                                                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    }`}
-                                                >
-                                                  <Download size={11} /> Notes
-                                                </button>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-10 text-center">
-                    <BookOpen size={36} className="mx-auto text-gray-200 mb-3" />
-                    <p className="text-sm text-gray-400">No content added yet.</p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* RIGHT COLUMN - Enrollment card + Instructor Sidebar */}
-          <div className="w-full lg:w-72 flex-shrink-0 space-y-5">
-            {/* Enrollment Card */}
-            <div className="bg-white rounded-sm border border-gray-100 overflow-hidden shadow-sm">
+          {/* RIGHT COLUMN - Sticky Enrollment & Pricing Card */}
+          <div className="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-20 space-y-4">
+            {/* Enrollment & Pricing Card */}
+            <div className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm">
+              {/* Media Preview Teaser */}
+              {firstPreviewTopic && (
+                <div
+                  onClick={() => playVideo(firstPreviewTopic)}
+                  className="relative aspect-video w-full bg-gray-900 overflow-hidden cursor-pointer group flex items-center justify-center border-b border-gray-200"
+                >
+                  {course.thumbnail || course.image ? (
+                    <img
+                      src={course.thumbnail || course.image}
+                      alt={course.title}
+                      className="absolute inset-0 w-full h-full object-cover opacity-90"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gray-900" />
+                  )}
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors" />
+
+                  {/* Play Button Overlay */}
+                  <div className="relative z-10 flex flex-col items-center gap-1.5 text-white text-center p-3">
+                    <div className="w-12 h-12 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-md">
+                      <Play size={20} className="ml-0.5 fill-blue-600" />
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider bg-black/60 px-2.5 py-0.5 rounded border border-white/20">
+                      Preview Course
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Pricing Content */}
               {checkingEnrollment ? (
-                <div className="p-8 text-center">
-                  <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-sm animate-spin mx-auto mb-2" />
-                  <p className="text-xs text-gray-400">Checking enrollment...</p>
+                <div className="p-6 text-center">
+                  <div className="w-7 h-7 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-xs text-gray-400">Verifying access...</p>
                 </div>
               ) : isEnrolled ? (
-                <div className="p-6 text-center">
-                  <div className="w-14 h-14 bg-green-100 rounded-sm flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle size={26} className="text-green-600" />
+                <div className="p-5 text-center">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2.5">
+                    <CheckCircle size={24} className="text-emerald-600" />
                   </div>
-                  <p className="font-bold text-gray-900 mb-1">Already Enrolled!</p>
-                  <p className="text-xs text-gray-500 mb-4">You have full access to this course</p>
-                  <div className="mb-4 py-2 border-y border-gray-100">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Course Price</p>
-                    <p className="text-lg font-bold text-gray-700">₹{(course?.price || 0).toLocaleString('en-IN')}</p>
-                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-0.5">Enrolled & Active!</h3>
+                  <p className="text-xs text-gray-500 mb-4">You have full access to all lectures and study notes</p>
+
                   <button
                     onClick={() => navigate('/purchescourse', { state: { courseId: course._id, course } })}
-                    className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-sm hover:bg-blue-700 transition-colors"
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-md shadow-xs active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    Continue Learning
+                    <Play size={14} className="fill-current" /> Continue Learning
                   </button>
                 </div>
               ) : (
-                <>
-                  <div className="p-5 text-center border-b border-gray-100">
+                <div className="p-5 space-y-4">
+                  {/* Price Header */}
+                  <div className="text-center pb-4 border-b border-gray-100">
                     {fetchingPrice ? (
-                      <div className="animate-pulse">
-                        <div className="h-8 bg-gray-200 rounded-sm w-24 mx-auto mb-2"></div>
-                        <div className="h-3 bg-gray-100 rounded-sm w-32 mx-auto"></div>
+                      <div className="animate-pulse space-y-2 py-2">
+                        <div className="h-7 bg-gray-200 rounded w-24 mx-auto"></div>
+                        <div className="h-3 bg-gray-100 rounded w-32 mx-auto"></div>
                       </div>
                     ) : (
                       <>
                         {hasPreviousPurchase ? (
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">Regular Price</p>
-                            <p className="text-3xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
-                            <p className="text-xs text-gray-400 mt-2">Standard pricing applies</p>
+                            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Course Fee</p>
+                            <p className="text-3xl font-extrabold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">One-time payment · Lifetime access</p>
                           </div>
                         ) : showDiscountBlock ? (
                           <div>
-                            <p className="text-sm text-gray-400 line-through">₹{originalPrice.toLocaleString('en-IN')}</p>
-                            <p className="text-3xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
-                            <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-green-100 rounded-sm">
-                              <Percent size={12} className="text-green-600" />
-                              <span className="text-xs font-semibold text-green-700">{discountApplied}% First Purchase Discount!</span>
+                            <p className="text-xs text-gray-400 line-through">₹{originalPrice.toLocaleString('en-IN')}</p>
+                            <p className="text-3xl font-extrabold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
+                            <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-semibold">
+                              <Percent size={11} /> {discountApplied}% Special Discount
                             </div>
                             {(discountValidFrom || discountValidUntil) && (
-                              <div className="mt-3 pt-2 border-t border-gray-100">
-                                <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
-                                  <Calendar size={12} />
-                                  {discountValidFrom && discountValidUntil ? (
-                                    <span>Valid: {discountValidFrom} - {discountValidUntil}</span>
-                                  ) : discountValidUntil ? (
-                                    <span>Valid until: {discountValidUntil}</span>
-                                  ) : discountValidFrom ? (
-                                    <span>Valid from: {discountValidFrom}</span>
-                                  ) : null}
-                                </div>
-                              </div>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Valid until: {discountValidUntil || 'Limited period'}
+                              </p>
                             )}
                           </div>
                         ) : isCompletelyFree() ? (
-                          <p className="text-3xl font-bold text-green-600">Free</p>
+                          <div>
+                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 mb-1.5">
+                              <Sparkles size={11} /> 100% Free Lifetime Access
+                            </div>
+                            <p className="text-3xl font-extrabold text-emerald-600">Free</p>
+                            <p className="text-xs text-gray-400 mt-0.5">No payment or credit card required</p>
+                          </div>
                         ) : (
-                          <>
-                            <p className="text-3xl font-bold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
-                            {!isCompletelyFree() && <p className="text-xs text-gray-400 mt-1">One-time payment · Full access</p>}
-                          </>
+                          <div>
+                            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Course Fee</p>
+                            <p className="text-3xl font-extrabold text-gray-900">₹{finalPrice.toLocaleString('en-IN')}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">One-time payment · Full access</p>
+                          </div>
                         )}
                       </>
                     )}
                   </div>
-                  <div className="p-5 space-y-4">
-                    <button
-                      onClick={handleEnrollClick}
-                      disabled={enrollmentLoading || paymentProcessing || fetchingPrice || info.disabled}
-                      className={`w-full py-3 text-sm font-semibold rounded-sm transition-colors ${info.disabled
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                        } disabled:opacity-60`}
-                    >
-                      {enrollmentLoading || paymentProcessing || fetchingPrice ? 'Processing...' : info.action}
-                    </button>
-                    <div className="space-y-2.5 text-sm text-gray-600">
-                      <div className="flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> {course.modules?.length || 0} modules</div>
-                      <div className="flex items-center gap-2"><Play size={14} className="text-blue-500" /> {tt} lessons total</div>
-                      {ft > 0 && <div className="flex items-center gap-2"><Unlock size={14} className="text-green-500" /> {ft} free previews</div>}
-                      {pt > 0 && !isCompletelyFree() && <div className="flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {pt} premium lessons</div>}
-                    </div>
-                    <div className="text-center text-xs text-gray-400 pt-2 border-t border-gray-100">
-                      <p>✓ Receipt will be sent to your email</p>
+
+                  {/* Primary CTA Button */}
+                  <button
+                    onClick={handleEnrollClick}
+                    disabled={enrollmentLoading || paymentProcessing || fetchingPrice || info.disabled}
+                    className={`w-full py-3 px-5 text-sm font-bold rounded-md transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer ${
+                      info.disabled
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : isCompletelyFree()
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-[#FB0500] hover:bg-red-700 text-white'
+                    } disabled:opacity-60`}
+                  >
+                    {enrollmentLoading || paymentProcessing || fetchingPrice ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Processing...
+                      </span>
+                    ) : isCompletelyFree() ? (
+                      <>
+                        <Play size={15} className="fill-current" /> Start Learning — Free
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard size={15} /> {info.action}
+                      </>
+                    )}
+                  </button>
+
+                  {/* Feature Highlights Checklist */}
+                  <div className="space-y-2.5 pt-3 border-t border-gray-100">
+                    <p className="text-xs font-bold text-gray-900 uppercase tracking-wider">This Course Includes:</p>
+                    <div className="space-y-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <BookOpen size={14} className="text-blue-500 flex-shrink-0" />
+                        <span>{course.modules?.length || 0} Modules & {tt} Lectures</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Unlock size={14} className="text-emerald-500 flex-shrink-0" />
+                        <span>{ft} Free preview video lessons</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FileText size={14} className="text-purple-500 flex-shrink-0" />
+                        <span>Downloadable lecture study notes (PDF)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Award size={14} className="text-amber-500 flex-shrink-0" />
+                        <span>Lifetime access on Mobile & Desktop</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={14} className="text-emerald-500 flex-shrink-0" />
+                        <span>Official Roots Classes course material</span>
+                      </div>
                     </div>
                   </div>
-                </>
+
+                  {/* Trust Footer */}
+                  <div className="pt-2.5 border-t border-gray-100 text-center">
+                    <p className="text-[11px] text-gray-400 flex items-center justify-center gap-1">
+                      <ShieldCheck size={13} className="text-emerald-600" />
+                      100% Safe & Secure · Instant Confirmation
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* INSTRUCTOR CARD - Now in sidebar */}
-            <div className="bg-white rounded-sm border border-gray-100 p-5 shadow-sm">
-              <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <User size={18} className="text-blue-500" />
-                Meet your instructor
+            {/* INSTRUCTOR CARD */}
+            <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3.5 flex items-center gap-1.5">
+                <User size={13} className="text-blue-600" />
+                Meet Your Instructor
               </h3>
-              <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-md">
-                    {instructor.name.charAt(0).toUpperCase()}
-                  </div>
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-lg flex items-center justify-center flex-shrink-0">
+                  {instructor.name.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="font-semibold text-gray-800">{instructor.name}</div>
-                  {instructor.role && (
-                    <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-gray-500">
-                      <GraduationCap size={12} />
-                      <span className="capitalize">{instructor.role}</span>
-                    </div>
-                  )}
-                  {instructor.email && (
-                    <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs">
-                      <Mail size={12} className="text-gray-400" />
-                      <a href={`mailto:${instructor.email}`} className="text-blue-600 hover:underline break-all">{instructor.email}</a>
-                    </div>
-                  )}
-                  {instructor.phone && (
-                    <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-gray-600">
-                      <Phone size={12} className="text-gray-400" />
-                      <a href={`tel:${instructor.phone}`}>{instructor.phone}</a>
-                    </div>
-                  )}
-                  {!instructor.email && !instructor.phone && !instructor.role && (
-                    <p className="text-xs text-gray-400">Contact details not available</p>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <h4 className="text-sm font-bold text-gray-900 truncate">{instructor.name}</h4>
+                    <CheckCircle size={13} className="text-blue-600 fill-blue-50 flex-shrink-0" />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                    {instructor.role || 'Roots Classes Faculty'}
+                  </p>
+
+                  <div className="mt-2.5 space-y-1 text-xs">
+                    {instructor.email && (
+                      <div className="flex items-center gap-1.5 text-gray-600">
+                        <Mail size={12} className="text-gray-400 flex-shrink-0" />
+                        <a href={`mailto:${instructor.email}`} className="text-blue-600 hover:underline truncate">
+                          {instructor.email}
+                        </a>
+                      </div>
+                    )}
+                    {instructor.phone && (
+                      <div className="flex items-center gap-1.5 text-gray-600">
+                        <Phone size={12} className="text-gray-400 flex-shrink-0" />
+                        <a href={`tel:${instructor.phone}`} className="hover:text-blue-600 transition-colors">
+                          {instructor.phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1222,18 +1497,44 @@ const CourseDetails = () => {
         </div>
       </div>
 
+      {/* Mobile Sticky Bottom CTA Bar */}
+      {!isEnrolled && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-3 px-4 z-40 flex items-center justify-between shadow-md">
+          <div>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Course Price</p>
+            <p className="text-lg font-bold text-gray-900">
+              {isCompletelyFree() ? (
+                <span className="text-emerald-600">Free</span>
+              ) : (
+                `₹${finalPrice.toLocaleString('en-IN')}`
+              )}
+            </p>
+          </div>
+          <button
+            onClick={handleEnrollClick}
+            disabled={enrollmentLoading || paymentProcessing || fetchingPrice || info.disabled}
+            className="py-2 px-5 bg-blue-600 text-white text-xs font-bold rounded-md shadow-xs cursor-pointer active:scale-95 transition-all"
+          >
+            {isCompletelyFree() ? 'Start Free' : info.action}
+          </button>
+        </div>
+      )}
+
       {/* Video Player Modal */}
       {showVideoPlayer && currentVideo && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/85 backdrop-blur-xs flex items-center justify-center z-50 p-4"
           onClick={() => { setShowVideoPlayer(false); setCurrentVideo(null); }}
         >
-          <div className="w-full max-w-4xl bg-black rounded-sm overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-3 bg-gray-900">
-              <p className="text-sm font-medium text-white truncate">{currentVideo.title}</p>
+          <div className="w-full max-w-4xl bg-gray-950 rounded-md overflow-hidden shadow-xl border border-gray-800" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3.5 bg-gray-900 border-b border-gray-800">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-sm font-semibold text-white truncate">{currentVideo.title}</p>
+              </div>
               <button
                 onClick={() => { setShowVideoPlayer(false); setCurrentVideo(null); }}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-sm transition-colors"
+                className="p-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>

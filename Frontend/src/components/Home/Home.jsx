@@ -6,6 +6,7 @@ import Experts from './Experts';
 import StatsBar from './StatsBar';
 import WhyChooseUs from './WhyChooseUs';
 import FAQ from './FAQ';
+import ComingBatches from './ComingBatches';
 import SEO from '../common/SEO';
 import axios from 'axios';
 import api from '../../services/endpoints';
@@ -177,6 +178,9 @@ const SliderPage = () => {
 
       {/* Programs */}
       <Classes />
+
+      {/* Coming Batches */}
+      <ComingBatches />
 
       {/* Why Choose Us */}
       <WhyChooseUs />

@@ -26,12 +26,19 @@ const onlineClassSchema = new mongoose.Schema(
         },
         plateform:{
             type:String,
-            enum:["Zoom","Google Meet","Microsoft Teams","YouTube"],
+            enum:["Zoom","Google Meet","Microsoft Teams","YouTube","Jitsi"],
             default:"Zoom"
         },
         meetingLink:{
             type:String,
-
+        },
+        roomName:{
+            type:String,
+            trim:true
+        },
+        date:{
+            type:String,
+            trim:true
         },
         color:{
             type:String

@@ -7,8 +7,7 @@ import User from "../../Student/student.model.js"
 
 export const createCourse = async (req, res) => {
   try {
-    const { title, description, category, level, price } = req.body;
-    console.log(req.body, "dfffffffffffffffffffff")
+    const { title, description, category, level, price, thumbnail, image } = req.body;
 
     if (!title || !category) {
       return res.status(400).json({
@@ -16,8 +15,6 @@ export const createCourse = async (req, res) => {
         message: "Title and Category are required",
       });
     }
-
-
 
     if (!mongoose.Types.ObjectId.isValid(category)) {
       return res.status(400).json({
@@ -33,15 +30,28 @@ export const createCourse = async (req, res) => {
         message: "Category not found",
       });
     }
-    console.log(req.user)
+
+    let imageUrl = image || thumbnail || "";
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: "courses" });
+        imageUrl = result.secure_url;
+      } catch (err) {
+        console.error("Cloudinary upload failed, fallback to local:", err);
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
+    }
+
     const course = await Course.create({
       title,
       description,
       category,
-      price,
+      price: price ? Number(price) : null,
       level: level || "beginner",
       instructor: req.user?._id,
       instructorName: req.user?.fullName || "Instructor Name Not Available",
+      thumbnail: imageUrl,
+      image: imageUrl,
       modules: [],
       status: "pending"
     });
@@ -96,7 +106,7 @@ export const GetCreatedCourse = async (req, res, next) => {
 
 export const UpdateCourse = async (req, res, next) => {
   try {
-    const { courseId, title, description, category, level, price } = req.body;
+    const { courseId, title, description, category, level, price, thumbnail, image } = req.body;
 
     // 🔥 1. Check courseId
     if (!courseId) {
@@ -126,6 +136,16 @@ export const UpdateCourse = async (req, res, next) => {
       });
     }
 
+    let imageUrl = image || thumbnail;
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: "courses" });
+        imageUrl = result.secure_url;
+      } catch (err) {
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
+    }
+
     // 🔥 4. Update course
     const updatedCourse = await Course.findByIdAndUpdate(
       courseId,
@@ -134,7 +154,9 @@ export const UpdateCourse = async (req, res, next) => {
         description: description || existingCourse.description,
         category: category || existingCourse.category,
         level: level || existingCourse.level,
-        price: price || existingCourse.price,
+        price: price !== undefined && price !== '' ? Number(price) : existingCourse.price,
+        thumbnail: imageUrl || existingCourse.thumbnail || existingCourse.image,
+        image: imageUrl || existingCourse.image || existingCourse.thumbnail,
         instructorName: existingCourse.instructorName || req.user?.fullName,
       },
       { returnDocument: "after" }

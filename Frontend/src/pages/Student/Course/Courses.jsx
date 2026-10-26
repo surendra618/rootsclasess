@@ -234,7 +234,7 @@ const ClassroomCourses = () => {
             {filtered.map((course) => {
               const enrolled = isEnrolled(course._id);
               const free = isFree(course);
-              const img = getImg(course._id, course.title, course.category?.name);
+              const img = course.thumbnail || course.image || getImg(course._id, course.title, course.category?.name);
               const price = priceLabel(course);
               const topics = topicCount(course);
               const modules = course.modules?.length || 0;
@@ -309,7 +309,7 @@ const ClassroomCourses = () => {
             {filtered.map((course) => {
               const enrolled = isEnrolled(course._id);
               const free = isFree(course);
-              const img = getImg(course._id, course.title, course.category?.name);
+              const img = course.thumbnail || course.image || getImg(course._id, course.title, course.category?.name);
               const price = priceLabel(course);
               const topics = topicCount(course);
               const modules = course.modules?.length || 0;

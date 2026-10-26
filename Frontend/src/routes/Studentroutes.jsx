@@ -14,6 +14,7 @@ import TermsAndConditions from "../pages/TermsAndConditions";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import TopicInfo from "../pages/Student/Course/Topicinfo";
 import About from "../pages/Student/About";
+import BatchEnrollment from "../pages/Student/BatchEnrollment";
 
 const StudentRoutes = [
     // Authentication Routes (Standalone / Full Page)
@@ -141,6 +142,24 @@ const StudentRoutes = [
             {
                 path: "/roots-scholarship",
                 element: <Scholarship />,
+            },
+
+            // Batch Enrollment
+            {
+                path: "/enroll",
+                element: <BatchEnrollment />,
+            },
+            {
+                path: "/enroll/:batchId",
+                element: <BatchEnrollment />,
+            },
+            {
+                path: "/batch-enrollment",
+                element: <BatchEnrollment />,
+            },
+            {
+                path: "/batch-enroll",
+                element: <BatchEnrollment />,
             },
 
             // Test Series

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   BookOpen, Plus, Edit2, Trash2, ChevronRight, Search, X, 
   Layers, Users, Star, IndianRupee, Filter, LayoutGrid, List,
-  CheckCircle
+  CheckCircle, UploadCloud, Image as ImageIcon, Sparkles
 } from 'lucide-react';
 
 const LEVELS = ['beginner', 'intermediate', 'advanced'];
@@ -24,7 +24,16 @@ const AllCourse = () => {
   const navigate = useNavigate();
   const { student, token } = useStudentStore();
 
-  const [formData, setFormData] = useState({ title: '', description: '', category: '', level: 'beginner', price: '' });
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    level: 'beginner',
+    price: '',
+    imageFile: null,
+    imagePreview: '',
+    thumbnail: ''
+  });
 
   useEffect(() => {
     fetchCourses();
@@ -55,42 +64,88 @@ const AllCourse = () => {
 
   const openCreate = () => {
     setEditingCourse(null);
-    setFormData({ title: '', description: '', category: '', level: 'beginner', price: '' });
+    setFormData({
+      title: '',
+      description: '',
+      category: '',
+      level: 'beginner',
+      price: '',
+      imageFile: null,
+      imagePreview: '',
+      thumbnail: ''
+    });
     setIsModalOpen(true);
   };
 
   const openEdit = (course) => {
     setEditingCourse(course);
+    const existingImg = course.thumbnail || course.image || '';
     setFormData({
-      title: course.title,
-      description: course.description,
-      category: course.category?._id || course.category,
+      title: course.title || '',
+      description: course.description || '',
+      category: course.category?._id || course.category || '',
       level: course.level || 'beginner',
-      price: course.price,
+      price: course.price ?? '',
+      imageFile: null,
+      imagePreview: existingImg,
+      thumbnail: existingImg
     });
     setIsModalOpen(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      setFormData(p => ({
+        ...p,
+        imageFile: file,
+        imagePreview: URL.createObjectURL(file)
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormLoading(true);
     try {
-      const payload = { ...formData, price: Number(formData.price) };
       const config = {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       };
 
+      const payload = new FormData();
+      payload.append('title', formData.title.trim());
+      payload.append('description', formData.description.trim());
+      payload.append('category', formData.category);
+      payload.append('level', formData.level || 'beginner');
+      payload.append('price', formData.price !== '' ? Number(formData.price) : 0);
+
+      if (formData.imageFile) {
+        payload.append('image', formData.imageFile);
+      } else if (formData.thumbnail) {
+        payload.append('thumbnail', formData.thumbnail);
+        payload.append('image', formData.thumbnail);
+      }
+
       if (editingCourse) {
-        await axios.post(api.course.editCourse, { courseId: editingCourse._id, ...payload }, config);
+        payload.append('courseId', editingCourse._id);
+        await axios.post(api.course.editCourse, payload, config);
         toast.success('Course updated successfully');
       } else {
         await axios.post(api.course.createCourse, payload, config);
-        toast.success('Course created successfully');
+        toast.success('Course created successfully with image');
       }
       setIsModalOpen(false);
       fetchCourses();
-    } catch {
-      toast.error('Something went wrong');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Something went wrong');
     } finally {
       setFormLoading(false);
     }
@@ -138,7 +193,7 @@ const AllCourse = () => {
           </div>
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 bg-[#0078FF] hover:bg-blue-600 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow-xs transition-all"
+            className="flex items-center gap-2 bg-[#0078FF] hover:bg-blue-600 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow-xs transition-all cursor-pointer"
           >
             <Plus size={16} />
             <span>Create New Course</span>
@@ -207,14 +262,14 @@ const AllCourse = () => {
             <div className="flex bg-gray-100 p-0.5 rounded-md border border-gray-200/60">
               <button 
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded-sm transition-all ${viewMode === 'table' ? 'bg-white shadow-xs text-[#0078FF]' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`p-1.5 rounded-sm transition-all cursor-pointer ${viewMode === 'table' ? 'bg-white shadow-xs text-[#0078FF]' : 'text-gray-500 hover:text-gray-700'}`}
                 title="Table View"
               >
                 <List size={16} />
               </button>
               <button 
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-xs text-[#0078FF]' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-white shadow-xs text-[#0078FF]' : 'text-gray-500 hover:text-gray-700'}`}
                 title="Grid View"
               >
                 <LayoutGrid size={16} />
@@ -241,7 +296,7 @@ const AllCourse = () => {
             {!search && (
               <button
                 onClick={openCreate}
-                className="mt-4 inline-flex items-center gap-1.5 bg-[#0078FF] text-white text-xs font-semibold px-3.5 py-2 rounded-md hover:bg-blue-600 transition-all shadow-xs"
+                className="mt-4 inline-flex items-center gap-1.5 bg-[#0078FF] text-white text-xs font-semibold px-3.5 py-2 rounded-md hover:bg-blue-600 transition-all shadow-xs cursor-pointer"
               >
                 <Plus size={14} />
                 <span>Create Course</span>
@@ -249,42 +304,75 @@ const AllCourse = () => {
             )}
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          /* Grid View with Rich Course Card Image */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((course) => {
               const style = getLevelStyles(course.level);
-              return (
-                <div key={course._id} className="bg-white rounded-md border border-gray-200/80 shadow-xs hover:border-gray-300 transition-all p-5 flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${style.bg} ${style.text} border ${style.border}`}>
-                        {course.level || 'Beginner'}
-                      </span>
-                      <span className="text-xs font-bold text-gray-900">
-                        {course.price ? `₹${course.price}` : <span className="text-emerald-600">Free</span>}
-                      </span>
-                    </div>
+              const courseImg = course.thumbnail || course.image;
 
-                    <h4 className="text-sm font-bold text-gray-900 mt-3 line-clamp-1">{course.title}</h4>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{course.description}</p>
+              return (
+                <div key={course._id} className="bg-white rounded-md border border-gray-200/80 shadow-xs hover:border-gray-300 transition-all overflow-hidden flex flex-col justify-between">
+                  {/* Top Image Banner */}
+                  <div className="relative h-44 w-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                    {courseImg ? (
+                      <img
+                        src={courseImg}
+                        alt={course.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.src = '/iit_jee_prep_hd.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-[#0078FF]">
+                        <BookOpen size={36} className="opacity-70 mb-1" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Roots Curriculum</span>
+                      </div>
+                    )}
+                    
+                    {/* Level Badge */}
+                    <span className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${style.bg} ${style.text} border ${style.border}`}>
+                      {course.level || 'Beginner'}
+                    </span>
+
+                    {/* Price Tag */}
+                    <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-white/95 text-gray-900 border border-gray-200 shadow-2xs">
+                      {course.price ? `₹${course.price}` : <span className="text-emerald-600 font-bold">Free</span>}
+                    </span>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-[11px] font-medium text-gray-500">
-                      {categories.find(c => c._id === (course.category?._id || course.category))?.name || 'General'}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => openEdit(course)} className="p-1.5 text-gray-400 hover:text-[#0078FF] transition-colors" title="Edit">
-                        <Edit2 size={15} />
-                      </button>
-                      <button onClick={() => handleDelete(course._id)} className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors" title="Delete">
-                        <Trash2 size={15} />
-                      </button>
-                      <button
-                        onClick={() => navigate(`/instructor/courses/${course._id}`)}
-                        className="px-3 py-1.5 text-xs font-semibold text-[#0078FF] bg-blue-50 hover:bg-blue-100 rounded-md transition-all flex items-center gap-1"
-                      >
-                        Manage <ChevronRight size={14} />
-                      </button>
+                  {/* Body Content */}
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 mb-1">
+                        <span className="text-[#0078FF] font-semibold">
+                          {categories.find(c => c._id === (course.category?._id || course.category))?.name || 'General'}
+                        </span>
+                        <span>•</span>
+                        <span>{course.modules?.length || 0} Modules</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-900 line-clamp-1">{course.title}</h4>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{course.description || 'No description provided.'}</p>
+                    </div>
+
+                    <div className="pt-3 mt-3 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-slate-400">
+                        Instructor: {course.instructorName || 'Roots Faculty'}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => openEdit(course)} className="p-1.5 text-gray-400 hover:text-[#0078FF] transition-colors cursor-pointer" title="Edit Course">
+                          <Edit2 size={15} />
+                        </button>
+                        <button onClick={() => handleDelete(course._id)} className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors cursor-pointer" title="Delete Course">
+                          <Trash2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => navigate(`/instructor/courses/${course._id}`)}
+                          className="px-2.5 py-1 text-xs font-semibold text-[#0078FF] bg-blue-50 hover:bg-blue-100 rounded-md transition-all flex items-center gap-0.5 cursor-pointer"
+                        >
+                          Manage <ChevronRight size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -292,7 +380,7 @@ const AllCourse = () => {
             })}
           </div>
         ) : (
-          /* Desktop Table View */
+          /* Desktop Table View with Course Image */
           <div className="bg-white rounded-md border border-gray-200/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -307,12 +395,28 @@ const AllCourse = () => {
                 <tbody className="divide-y divide-gray-100">
                   {filtered.map((course) => {
                     const style = getLevelStyles(course.level);
+                    const courseImg = course.thumbnail || course.image;
+
                     return (
                       <tr key={course._id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-md bg-blue-50 flex items-center justify-center text-[#0078FF] font-bold shrink-0">
-                              <BookOpen size={18} />
+                            {/* Course Image / Icon */}
+                            <div className="w-12 h-10 rounded-md overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center">
+                              {courseImg ? (
+                                <img
+                                  src={courseImg}
+                                  alt={course.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.src = '/iit_jee_prep_hd.jpg';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[#0078FF] bg-blue-50 font-bold">
+                                  <BookOpen size={18} />
+                                </div>
+                              )}
                             </div>
                             <div>
                               <p className="text-xs font-bold text-gray-900 line-clamp-1">{course.title}</p>
@@ -320,7 +424,7 @@ const AllCourse = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-3.5">
                           <div className="space-y-1">
                             <p className="text-xs font-medium text-gray-700">
                               {categories.find(c => c._id === (course.category?._id || course.category))?.name || '—'}
@@ -331,29 +435,29 @@ const AllCourse = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-3.5">
                           <p className="text-xs font-bold text-gray-900">
                             {course.price ? `₹${course.price}` : <span className="text-emerald-600">Free</span>}
                           </p>
                         </td>
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-5 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => navigate(`/instructor/courses/${course._id}`)}
-                              className="px-3 py-1.5 text-xs font-semibold text-[#0078FF] bg-blue-50 hover:bg-blue-100 rounded-md transition-all"
+                              className="px-3 py-1.5 text-xs font-semibold text-[#0078FF] bg-blue-50 hover:bg-blue-100 rounded-md transition-all cursor-pointer"
                             >
                               Manage
                             </button>
                             <button
                               onClick={() => openEdit(course)}
-                              className="p-1.5 text-gray-400 hover:text-[#0078FF] hover:bg-gray-100 rounded-md transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-[#0078FF] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                               title="Edit Course"
                             >
                               <Edit2 size={15} />
                             </button>
                             <button
                               onClick={() => handleDelete(course._id)}
-                              className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-gray-100 rounded-md transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                               title="Delete Course"
                             >
                               <Trash2 size={15} />
@@ -370,25 +474,76 @@ const AllCourse = () => {
         )}
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit Modal with Image Upload */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-md border border-gray-200/80 shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md border border-gray-200/80 shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-sm font-bold text-gray-900">
-                {editingCourse ? 'Edit Course' : 'Create New Course'}
-              </h3>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">
+                  {editingCourse ? 'Edit Course' : 'Create New Course'}
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-0.5">Fill in details and upload course cover image</p>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-all"
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-all cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+
+              {/* 📷 Course Cover Image Upload Section */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Course Title</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Course Cover Image / Thumbnail
+                </label>
+                
+                {formData.imagePreview ? (
+                  <div className="relative rounded-md overflow-hidden border border-gray-200 bg-slate-100 h-36 flex items-center justify-center group">
+                    <img
+                      src={formData.imagePreview}
+                      alt="Course Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <label className="px-3 py-1.5 bg-white text-gray-800 text-xs font-bold rounded-md cursor-pointer hover:bg-gray-100 shadow-xs">
+                        Change Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, imageFile: null, imagePreview: '', thumbnail: '' }))}
+                        className="px-3 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-md hover:bg-rose-700 shadow-xs cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-gray-300 hover:border-[#0078FF] rounded-md p-4 flex flex-col items-center justify-center text-center cursor-pointer bg-gray-50/50 hover:bg-blue-50/30 transition-all">
+                    <UploadCloud className="w-8 h-8 text-[#0078FF] mb-1.5" />
+                    <span className="text-xs font-bold text-gray-800">Click to Upload Course Image</span>
+                    <span className="text-[11px] text-gray-400 mt-0.5">PNG, JPG, WEBP up to 5MB</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Course Title *</label>
                 <input
                   type="text"
                   required
@@ -400,7 +555,7 @@ const AllCourse = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Brief Description</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Brief Description *</label>
                 <textarea
                   rows="3"
                   required
@@ -413,7 +568,7 @@ const AllCourse = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Category</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Category *</label>
                   <select
                     required
                     value={formData.category}
@@ -426,7 +581,7 @@ const AllCourse = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Target Level</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Target Level *</label>
                   <select
                     required
                     value={formData.level}
@@ -459,14 +614,14 @@ const AllCourse = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2 text-xs font-semibold text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-all"
+                  className="flex-1 py-2 text-xs font-semibold text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex-1 py-2 text-xs font-bold text-white bg-[#0078FF] rounded-md hover:bg-blue-600 disabled:opacity-60 transition-all shadow-xs flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 text-xs font-bold text-white bg-[#0078FF] rounded-md hover:bg-blue-600 disabled:opacity-60 transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {formLoading ? 'Saving...' : (editingCourse ? 'Update Course' : 'Create Course')}
                 </button>

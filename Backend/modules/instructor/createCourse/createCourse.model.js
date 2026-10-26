@@ -90,6 +90,9 @@ const courseSchema = new mongoose.Schema({
     default: "beginner",
   },
 
+  thumbnail: { type: String, default: "" },
+  image: { type: String, default: "" },
+
   modules: [moduleSchema],
 
   createdAt: { type: Date, default: Date.now },

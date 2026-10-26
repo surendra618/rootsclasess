@@ -101,6 +101,8 @@ const AdminSidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { name: 'Scholarship Results', path: '/admin/scholarship-results', icon: FaGoogleScholar },
     { name: 'Testimonials', path: '/admin/testimonials', icon: PiStudentBold },
     { name: 'UI Sliders', path: '/admin/manage-slider', icon: LuSlidersHorizontal },
+    { name: 'Manage Batches', path: '/admin/batches', icon: Calendar },
+    { name: 'Batch Applications', path: '/admin/batch-applications', icon: Users },
     { name: 'Blogs', path: '/admin/blogs', icon: FileText },
     { name: 'Faculty Team', path: '/admin/faculty', icon: PiChalkboard },
     { name: 'Success Stories', path: '/admin/success-stories', icon: Sparkles },

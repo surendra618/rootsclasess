@@ -5,10 +5,10 @@ import multer from "multer";
 import { authMiddleware } from "../../../middleware/auth.js"
 const createcourseRouter = Router()
 const Upload = multer({ dest: "uploads/" });
-createcourseRouter.post("/create_course", authMiddleware, createCourse)
+createcourseRouter.post("/create_course", authMiddleware, Upload.single("image"), createCourse)
 createcourseRouter.post("/get_category",GetCategory)
 createcourseRouter.post("/get_course",GetCreatedCourse)
-createcourseRouter.post("/edit_course", authMiddleware, UpdateCourse)
+createcourseRouter.post("/edit_course", authMiddleware, Upload.single("image"), UpdateCourse)
 createcourseRouter.post("/delete_course", authMiddleware, DeleteCourse)
 createcourseRouter.post("/get-course-by-id" , handleGetCourseById)
 

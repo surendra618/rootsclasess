@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import {
   Users,
   BookOpen,
@@ -88,14 +89,18 @@ const Dashboard = () => {
         // 2. Process Course-wise Enrollment Graph
         const enrollmentMap = {};
         enrollments.forEach(enroll => {
-          const title = enroll.course?.title || 'Unknown';
+          const title = enroll.course?.title || enroll.courseTitle || 'Untitled Course';
           enrollmentMap[title] = (enrollmentMap[title] || 0) + 1;
         });
 
         const courseEnrollment = Object.keys(enrollmentMap)
-          .map(name => ({ name, count: enrollmentMap[name] }))
+          .map(name => ({
+            name,
+            fullName: name,
+            count: enrollmentMap[name]
+          }))
           .sort((a, b) => b.count - a.count)
-          .slice(0, 8); // Top 8 courses
+          .slice(0, 5); // Top 5 courses to keep card sleek & readable
 
         // 3. Process Course Approval Status Graph
         const statusMap = { approved: 0, pending: 0, rejected: 0 };
@@ -248,36 +253,79 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Course-wise Enrollment Graph */}
-        <div className="bg-white p-5 md:p-6 rounded-xl border border-gray-200/80 shadow-xs">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-purple-50 rounded-lg">
-                <BarChart3 size={18} className="text-purple-600" />
+        {/* Course-wise Enrollment / Popular Courses */}
+        <div className="bg-white p-5 md:p-6 rounded-xl border border-gray-200/80 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <BarChart3 size={18} className="text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Popular Courses</h3>
+                  <p className="text-[11px] text-gray-400">Ranked by student enrollment volume</p>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-900 text-sm">Popular Courses</h3>
+              <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-100 px-2.5 py-0.5 rounded-full">
+                Top {stats.courseEnrollment.length} Courses
+              </span>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              {stats.courseEnrollment.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 text-xs">
+                  No course enrollments recorded yet.
+                </div>
+              ) : (
+                stats.courseEnrollment.map((course, idx) => {
+                  const maxCount = Math.max(...stats.courseEnrollment.map(c => c.count), 1);
+                  const pct = Math.round((course.count / maxCount) * 100);
+                  const gradients = [
+                    'from-[#8B5CF6] to-[#6366F1]',
+                    'from-[#0078FF] to-[#06B6D4]',
+                    'from-[#FB0500] to-[#F43F5E]',
+                    'from-[#10B981] to-[#14B8A6]',
+                    'from-[#F59E0B] to-[#F97316]'
+                  ];
+                  const barGradient = gradients[idx % gradients.length];
+
+                  return (
+                    <div key={idx} className="p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center justify-between text-xs mb-1.5 gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <span
+                            className="font-medium text-slate-800 truncate text-xs"
+                            title={course.fullName}
+                          >
+                            {course.fullName}
+                          </span>
+                        </div>
+                        <span className="font-bold text-purple-700 text-[11px] shrink-0 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                          {course.count} {course.count === 1 ? 'student' : 'students'}
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`bg-gradient-to-r ${barGradient} h-full rounded-full transition-all duration-700`}
+                          style={{ width: `${Math.max(pct, 8)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
-          <div className="h-[280px] w-full min-h-[280px]">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-              <BarChart data={stats.courseEnrollment} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F1F5F9" />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#475569', fontSize: 11, fontWeight: 500 }}
-                  width={120}
-                />
-                <Tooltip
-                  cursor={{ fill: '#F8FAFC' }}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}
-                />
-                <Bar dataKey="count" fill="#8B5CF6" radius={[0, 4, 4, 0]} barSize={18} />
-              </BarChart>
-            </ResponsiveContainer>
+
+          <div className="pt-3 mt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+            <span>Live Course Analytics</span>
+            <Link to="/admin/all-courses" className="text-purple-600 font-semibold hover:underline">
+              View All Courses →
+            </Link>
           </div>
         </div>
       </div>

@@ -27,6 +27,7 @@ import callbackRouter from "./modules/Admin/Callback/callback.routes.js";
 import facultyRouter from "./modules/Admin/Faculty/faculty.routes.js";
 import progressRouter from "./modules/Student/progress/progress.routes.js";
 import policyRouter from "./modules/Admin/Policy/policy.routes.js";
+import batchRouter from "./modules/Admin/Batch/batch.routes.js";
 
 dotenv.config();
 const app = express();
@@ -80,6 +81,8 @@ app.use("/faculty", facultyRouter);
 app.use("/progress", progressRouter);
 app.use("/policy", policyRouter);
 app.use("/policies", policyRouter);
+app.use("/batch", batchRouter);
+app.use("/batches", batchRouter);
 
 
 

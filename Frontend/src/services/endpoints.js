@@ -83,6 +83,18 @@ const api = {
       topicProgress:Base_Url+"/progress/mark-topic-complete",
       getProgress:Base_Url+"/progress/fatch-progress",
       getAllProgress:Base_Url+"/progress/fatch-all-progress"
+     },
+     batch: {
+       getAll: Base_Url + "/batch/all",
+       create: Base_Url + "/batch/create",
+       update: (id) => Base_Url + `/batch/update/${id}`,
+       delete: (id) => Base_Url + `/batch/delete/${id}`,
+       approve: (id) => Base_Url + `/batch/approve/${id}`,
+       createOrder: Base_Url + "/batch/create-order",
+       apply: Base_Url + "/batch/apply",
+       getApplications: Base_Url + "/batch/applications",
+       updateStatus: (id) => Base_Url + `/batch/application/${id}/status`,
+       deleteApplication: (id) => Base_Url + `/batch/application/${id}`
      }
 }
 
