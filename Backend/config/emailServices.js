@@ -11,8 +11,8 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Pre-verify and warm up SMTP connection
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+// Pre-verify and warm up SMTP connection (skip on Vercel serverless to avoid startup delays)
+if (!process.env.VERCEL && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     transporter.verify((error) => {
         if (error) {
             console.warn("⚠️ SMTP Transporter Connection Warning:", error.message);
@@ -20,7 +20,7 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             console.log("✅ Nodemailer SMTP Transporter ready & connected!");
         }
     });
-} else {
+} else if (!process.env.EMAIL_USER && !process.env.VERCEL) {
     console.error("❌ CRITICAL: EMAIL_USER or EMAIL_PASS environment variables are missing on this server!");
 }
 

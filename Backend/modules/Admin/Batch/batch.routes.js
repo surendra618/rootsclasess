@@ -18,13 +18,22 @@ import {
 const batchRouter = Router();
 
 // Configure storage for batch banner uploads
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+import os from "os";
+
+const uploadsDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), "uploads")
+  : path.join(process.cwd(), "uploads");
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {
+  // Read-only filesystem on Vercel serverless
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `batch_${Date.now()}_${Math.random().toString(36).substring(2, 7)}${ext}`);
